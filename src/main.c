@@ -217,8 +217,10 @@ void draw_card(int ccard, int xpos, int ypos) {
 		mvwprintw(screen,ypos,xpos+1,"-*-");
 	} else if (ccard < 27) {
 		mvwprintw(screen,ypos,xpos+1,"%c%c",cardvals[ccard / 3],cardsuits[ccard % 3]);
+	} else if (ccard < FLOWER) {
+		mvwprintw(screen,ypos,xpos+1,"-%c-",cardsuits[ccard % 3]);
 	} else {
-		mvwprintw(screen,ypos,xpos+1," %c",cardvals[ccard / 3]);
+		mvwprintw(screen,ypos,xpos+1," @ ");
 	}
 	wattroff(screen,A_BOLD | COLOR_PAIR(1+(ccard%3)));
 
