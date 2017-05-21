@@ -8,6 +8,8 @@ separate game on
 [Steam](http://store.steampowered.com/app/570490/SHENZHEN_SOLITAIRE/) and the
 [App Store](https://itunes.apple.com/tw/app/shenzhen-solitaire/id1206037778).
 
+![Screenshot](http://i.imgur.com/H0e961d.png)
+
 # Compiling
 
 If the `ncursesw` library (version 5) is available, compiling this game should
