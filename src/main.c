@@ -531,7 +531,7 @@ int main(int argc, char** argv) {
 			selrow = -1; selpos = -1; selcard = -1;
 		}
 
-	} while (c != 'Q');	
+	} while (c != 'Q' && c != 27);	
 
 	endwin();
 	return 0;
