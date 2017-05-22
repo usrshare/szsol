@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <ctype.h>
 
 #define NUMCARDS 40
 
@@ -39,8 +40,6 @@ const char* cardvals = "123456789****@";
 const char* cardsuits = "OIX";
 const char* rowkeys = "wertyuio123@890";
 
-int selrow = -1;
-int selpos = -1;
 
 unsigned int set_win_count(unsigned int value) {
 	char* homedir = getenv("HOME");
@@ -157,14 +156,19 @@ bool remove_card(int card) {
 bool move_card(int oldrow, int movecard, int newrow) {
 
 	if (oldrow == -1) return false;
-	if (oldrow >= 11) return false;
+	if (oldrow >= 11) return false; //can't move cards from the flower row or foundations
 	if (movecard < 0) return false;
 
-	if ((newrow >= 8) && (newrow < 11) && (rows[newrow] != -1)) return false;
-	if ((newrow >= 8) && (cards[movecard].next != -1)) return false;
-	if ((newrow == 11) && (movecard != FLOWER)) return false;	
-	if ((newrow < 8) && (!card_can_be_stacked(lastcard(newrow),movecard)) ) return false;
-	if ( (newrow >= 12) && ( (movecard >= FIRSTDRAGON) || ( (rows[newrow] != -1) && (rows[newrow] != (movecard - 3) )) ) ) return false;
+	if ((newrow >= 8) && (newrow < 11) && (rows[newrow] != -1)) return false; //can't move cards onto filled free cells, flower rows or foundations
+	if ((newrow >= 8) && (cards[movecard].next != -1)) return false; //can't move more than one card onto a free cell, flower row or foundation
+
+	if ((newrow == 11) && (movecard != FLOWER)) return false; //can only move the flower onto the flower row
+	if ((newrow < 8) && (!card_can_be_stacked(lastcard(newrow),movecard)) ) return false; //can only move stackable cards between tableau rows
+	
+	if ( (newrow >= 12) && ( (movecard >= FIRSTDRAGON)) ) return false; //can't move dragons onto foundations
+       
+	if ( (newrow >= 12) && ( rows[newrow] == -1) && (movecard >= 3) ) return false; // can only move aces onto empty foundations
+	if ( (newrow >= 12) && ( rows[newrow] != -1) && (rows[newrow] != (movecard - 3)) ) return false; //can only move next card in same rank onto filled foundations
 
 	//at this point, all moves are legal, so let's remove the card from its old location
 
@@ -277,22 +281,30 @@ int remove_exposed_dragons(int suit) {
 void draw_cards() {
 
 	for (int i=0; i < 3; i++) {
-		mvwaddch(screen, 1, 4 + i*7, rowkeys[8+i]);
 		draw_card(rows[8+i], 2 + i*7, 2);
-		mvwaddch(screen, 1, 60 + i*7, rowkeys[12+i]);
 		draw_card(rows[12+i], 58 + i*7, 2);
+		wattron(screen, COLOR_PAIR(CPAIR_MAGENTA));
+		mvwaddch(screen, 1, 4 + i*7, rowkeys[8+i]);
+		mvwaddch(screen, 1, 60 + i*7, rowkeys[12+i]);
+		wattroff(screen, COLOR_PAIR(CPAIR_MAGENTA));
 	}
 	draw_card(rows[11], 38, 2);
 
 	int r = exposed_dragons();
 	for (int i=0; i < 3; i++) {
-		wattron(screen, (r & (1 << i)) ? COLOR_PAIR(i+1) : COLOR_PAIR(CPAIR_MAGENTA));
-		mvwprintw(screen, 2, 22 + (i*4), "(%c)", (r & (1 << i)) ? '4' + i : ' ');
-		wattroff(screen, (r & (1 << i)) ? COLOR_PAIR(i+1) : COLOR_PAIR(CPAIR_MAGENTA));
+		wattron(screen, COLOR_PAIR(CPAIR_MAGENTA));
+		mvwprintw(screen, 1, 23 + (i*4), "%d", 4 + i);
+		wattroff(screen, COLOR_PAIR(CPAIR_MAGENTA));
+		
+		wattron(screen, ( (r & (1 << i)) ? A_BOLD : 0 ) | COLOR_PAIR(i+1));
+		mvwprintw(screen, 2, 22 + (i*4), "(%c)", (r & (1 << i)) ? cardsuits[i] : ' ');
+		wattroff(screen, ( (r & (1 << i)) ? A_BOLD : 0 ) | COLOR_PAIR(i+1));
 	}
 
 	for (int i=0; i < 8; i++) {
+		wattron(screen, COLOR_PAIR(CPAIR_MAGENTA));
 		mvwaddch(screen, 4, 8 + i*9, rowkeys[i]);
+		wattroff(screen, COLOR_PAIR(CPAIR_MAGENTA));
 		int ccard = rows[i];
 		int ypos = 0;
 		do {
@@ -456,8 +468,12 @@ int main(int argc, char** argv) {
 	}
 
 	int c = 0;
+
+	int selrow = -1;
+	int selpos = -1;
+	
 	do {
-		while (auto_move()) {};
+		if ((selrow == -1) && (selpos == -1) && (selcard == -1)) while (auto_move()) {};
 		draw_cards();
 		c = wgetch(screen);
 
@@ -485,16 +501,26 @@ int main(int argc, char** argv) {
 					selcard = newcard;
 				}
 			}
+		} else if ((x = strchr(rowkeys,(char)(tolower(c)) )) != NULL) {
+			int newrow = x - rowkeys;
+			int newcard = get_card(newrow, -1, &selpos);
+			int nextcard = -1;
+
+			while ((selpos > 0) && ((nextcard = get_card(newrow, selpos-1,&selpos)) != -1) && (card_can_be_stacked(nextcard,newcard)) ) newcard = nextcard;
+
+			selrow = newrow;
+			selcard = newcard;
 		}
 
 		if ((c >= '4') && (c <= '6')) {
 			int r = exposed_dragons();
 			int suit = c - '4';
 			if (r && (1 << suit)) remove_exposed_dragons(suit);
+			selrow = -1; selpos = -1; selcard = -1;
 		}
 
 		if (c == ' ') {
-			selrow = -1; selcard = -1;
+			selrow = -1; selpos = -1; selcard = -1;
 		}
 
 	} while (c != 'Q');	

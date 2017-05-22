@@ -34,7 +34,7 @@ Cards valued 1 to 9 stack on the foundations by suit (or color) in increasing
 order (1->2->3). They can also be stacked on the tableau in decreasing
 order (9->8->7), but only if the suits alternate.
 
-Dragons (labeled '\*') can't be stacked -- but when all four dragons
+Dragons (labeled with dashes) can't be stacked -- but when all four dragons
 of a single suit are exposed, they can be moved into a single free cell.
 
 The free cells are empty areas where one of any card can be stored. (With the
@@ -47,7 +47,8 @@ dedicated area automatically as soon as possible.
 ## Controls
  * 1,2,3: select free cells
  * W,E,R,T,Y,U,I,O: select tableau rows
-   (press multiple times to move more than one card from a row
+   (press multiple times to move more than one card from a row)
+   (hold shift to select as many cards as possible from a row)
  * 8,9,0: select foundations
  * [space bar]: remove selection
  * 4,5,6: move dragon cards onto a free cell (when available)
