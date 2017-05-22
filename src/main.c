@@ -515,7 +515,7 @@ int main(int argc, char** argv) {
 		if ((c >= '4') && (c <= '6')) {
 			int r = exposed_dragons();
 			int suit = c - '4';
-			if (r && (1 << suit)) remove_exposed_dragons(suit);
+			if (r & (1 << suit)) remove_exposed_dragons(suit);
 			selrow = -1; selpos = -1; selcard = -1;
 		}
 
