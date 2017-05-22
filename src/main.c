@@ -446,6 +446,9 @@ int main(int argc, char** argv) {
 	}
 
 	initscr();
+#ifdef NCURSES_VERSION
+	set_escdelay(100);
+#endif
 	cbreak();
 	noecho();
 	start_color();
@@ -456,6 +459,7 @@ int main(int argc, char** argv) {
 	init_pair(CPAIR_MAGENTA,COLOR_MAGENTA,COLOR_BLACK);
 
 	screen = newwin(24,80,(LINES-24)/2,(COLS-80) / 2);
+	keypad(screen,true);
 	box(screen,0,0);
 	wrefresh(screen);
 
@@ -525,7 +529,7 @@ int main(int argc, char** argv) {
 		if ((c >= '4') && (c <= '6')) {
 			int r = exposed_dragons();
 			int suit = c - '4';
-			if (r && (1 << suit)) remove_exposed_dragons(suit);
+			if (r & (1 << suit)) remove_exposed_dragons(suit);
 			selrow = -1; selpos = -1; selcard = -1;
 		}
 
