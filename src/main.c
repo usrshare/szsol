@@ -38,7 +38,9 @@ int selcard = -1;
 
 const char* cardvals = "123456789****@";
 const char* cardsuits = "OIX";
-const char* rowkeys = "wertyuio123@890";
+const char* rowkeys =    "wertyuio123@890";
+const char* qwertzkeys = "wertzuio123@890";
+const char* azertykeys = "zertyuio123@890";
 
 
 unsigned int set_win_count(unsigned int value) {
@@ -168,7 +170,7 @@ bool move_card(int oldrow, int movecard, int newrow) {
 	if ( (newrow >= 12) && ( (movecard >= FIRSTDRAGON)) ) return false; //can't move dragons onto foundations
        
 	if ( (newrow >= 12) && ( rows[newrow] == -1) && (movecard >= 3) ) return false; // can only move aces onto empty foundations
-	if ( (newrow >= 12) && ( rows[newrow] != -1) && (rows[newrow] != (movecard - 3)) ) return false; //can only move next card in same rank onto filled foundations
+	if ( (newrow >= 12) && ( rows[newrow] != -1) && (rows[newrow] != (movecard - 3)) ) return false; //can only move next card in same rank onto filled foundations, previous cards in foundations will just be discarded.
 
 	//at this point, all moves are legal, so let's remove the card from its old location
 
@@ -178,7 +180,8 @@ bool move_card(int oldrow, int movecard, int newrow) {
 
 	//and put it into the new one
 
-	if ( (newrow >= 12) || (rows[newrow] == -1) ) {
+	int lcard = lastcard(newrow);
+	if ( (newrow >= 12) || (lcard == -1) ) {
 
 		//empty row or foundation
 		rows[newrow] = movecard; return true;
@@ -186,9 +189,7 @@ bool move_card(int oldrow, int movecard, int newrow) {
 	} else {
 		//full row -- find last card and append
 
-		int ccard = rows[newrow];
-		while (cards[ccard].next >= 0) ccard = cards[ccard].next;
-		cards[ccard].next = movecard;
+		cards[lcard].next = movecard;
 		return true;
 	}
 }
@@ -332,7 +333,7 @@ void draw_cards() {
 
 int get_card(int row, int pos, int* o_pos) {
 
-	if (row >= 14) return -1;
+	if (row >= 15) return -1;
 	if (row >= 8) return rows[row];
 
 	int curpos = 0;
@@ -392,12 +393,18 @@ int main(int argc, char** argv) {
 
 	//int dbgmode = 0;
 
-	while ((opt = getopt(argc, argv, "dv")) != -1) {
+	while ((opt = getopt(argc, argv, "dvDF")) != -1) {
 		switch (opt) {
 			case 'd':
 				//dbgmode = 1;
 				printf("Press ENTER to start (feel free to attach a debugger to this process at this moment).\n");
 				getc(stdin);
+				break;
+			case 'D':
+				rowkeys = qwertzkeys;
+				break;
+			case 'F':
+				rowkeys = azertykeys;
 				break;
 			case 'v':
 				printf( 
@@ -428,6 +435,7 @@ int main(int argc, char** argv) {
 "Controls:\n"
 "1,2,3 -- select free cells\n"
 "W,E,R,T,Y,U,I,O -- select tableau rows\n"
+"Shift-W,E,R,T,Y,U,I,O -- select highest possible card in that tableau row\n"
 "(press multiple times to move more than one card from a row\n"
 "8,9,0 -- select foundations\n"
 "[space bar] -- remove selection\n"
@@ -523,7 +531,7 @@ int main(int argc, char** argv) {
 			selrow = -1; selpos = -1; selcard = -1;
 		}
 
-	} while (c != 'Q');	
+	} while (c != 'Q' && c != 27);	
 
 	endwin();
 	return 0;
