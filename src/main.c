@@ -504,6 +504,8 @@ int main(int argc, char** argv) {
 					selrow = -1;
 					selpos = -1;
 					selcard = -1;
+				} else if (newcard == -1) {
+					beep();
 				} else {
 					selrow = newrow;
 					selcard = newcard;
