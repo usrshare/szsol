@@ -23,18 +23,23 @@ enum cpairs {
 	CPAIR_BLUE,
 	CPAIR_MAGENTA,
 };
-int rows[15] = {
-	-1,-1,-1,-1,-1,-1,-1,-1, //tableau
-	-1,-1,-1, //free cells
-	-1, //flower area
-	-1,-1,-1}; //foundations
-
-int selcard = -1;
-
 #define NINES 24
 #define FIRSTDRAGON 27
 #define FLOWER 39
-#define DRAGONSTACK -2
+#define C_EMPTY -1
+#define C_DRAGONSTACK -2
+
+int rows[15] = {
+	C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY, //tableau
+	C_EMPTY,C_EMPTY,C_EMPTY, //free cells
+	C_EMPTY, //flower area
+	C_EMPTY,C_EMPTY,C_EMPTY}; //foundations
+
+int selcard = C_EMPTY;
+
+
+int dbgmode = 0;
+bool showcardnum = false;
 
 const char* cardvals = "123456789****@";
 const char* cardsuits = "OIX";
@@ -102,7 +107,7 @@ struct cardll cards[40];
 
 int lastcard(int row) {
 	int ccard = rows[row];
-	while ((ccard >= 0) && (cards[ccard].next != -1))
+	while ((ccard >= 0) && (cards[ccard].next != C_EMPTY))
 		ccard = cards[ccard].next;
 	return ccard;
 }
@@ -110,14 +115,16 @@ int lastcard(int row) {
 int add_to_pile(int pile, int newcard) {
 
 	int ccard = lastcard(pile);
-	if (ccard == -1) rows[pile] = newcard; else cards[ccard].next = newcard;
+	if (ccard == C_EMPTY) rows[pile] = newcard; else cards[ccard].next = newcard;
 	return 0;
 };
 
 bool card_can_be_stacked(int top, int bot) {
 
-	if (top == -1) return true;
-	if (bot == -1) return false;
+	if (top == C_EMPTY) return true;
+	if (top == C_DRAGONSTACK) return false;
+	if (bot == C_EMPTY) return false;
+	if (bot == C_DRAGONSTACK) return false;
 	if (top >= FIRSTDRAGON) return false;
 	if (bot >= FIRSTDRAGON) return false;
 	if ( ((top % 3) != (bot % 3)) && ((top / 3) == (1 + (bot / 3)) ) ) return true;
@@ -127,19 +134,19 @@ bool card_can_be_stacked(int top, int bot) {
 int find_parent(int card) {
 	for (int i=0; i < 8; i++) {
 		int curcard = rows[i];
-		if (curcard == card) return -1;
+		if (curcard == card) return C_EMPTY;
 		while (cards[curcard].next >= 0) {
 			if(cards[curcard].next == card) return curcard;
 			curcard = cards[curcard].next;
 		}
 	}
-	return -1;
+	return C_EMPTY;
 }
 
 int stacklen(int card){
 	int x = 0;
 	int ccard = card;
-	while (ccard != -1) { ccard = cards[ccard].next; x++; }
+	while (ccard >= 0) { ccard = cards[ccard].next; x++; }
 	return x;
 }
 
@@ -149,39 +156,39 @@ bool remove_card(int card) {
 	if ((card < 0) || (card > FLOWER)) return false;
 
 	int pcard = find_parent(card);
-	if (pcard != -1) cards[pcard].next = -1;
+	if (pcard != C_EMPTY) cards[pcard].next = C_EMPTY;
 	for (int i=0; i<11; i++)
-		if (rows[i] == card) rows[i] = -1;
+		if (rows[i] == card) rows[i] = C_EMPTY;
 	return true;
 }
 
 bool move_card(int oldrow, int movecard, int newrow) {
 
-	if (oldrow == -1) return false;
+	if (oldrow == C_EMPTY) return false;
 	if (oldrow >= 11) return false; //can't move cards from the flower row or foundations
 	if (movecard < 0) return false;
 
-	if ((newrow >= 8) && (newrow < 11) && (rows[newrow] != -1)) return false; //can't move cards onto filled free cells, flower rows or foundations
-	if ((newrow >= 8) && (cards[movecard].next != -1)) return false; //can't move more than one card onto a free cell, flower row or foundation
+	if ((newrow >= 8) && (newrow < 11) && (rows[newrow] != C_EMPTY)) return false; //can't move cards onto filled free cells, flower rows or foundations
+	if ((newrow >= 8) && (cards[movecard].next != C_EMPTY)) return false; //can't move more than one card onto a free cell, flower row or foundation
 
 	if ((newrow == 11) && (movecard != FLOWER)) return false; //can only move the flower onto the flower row
 	if ((newrow < 8) && (!card_can_be_stacked(lastcard(newrow),movecard)) ) return false; //can only move stackable cards between tableau rows
 	
 	if ( (newrow >= 12) && ( (movecard >= FIRSTDRAGON)) ) return false; //can't move dragons onto foundations
        
-	if ( (newrow >= 12) && ( rows[newrow] == -1) && (movecard >= 3) ) return false; // can only move aces onto empty foundations
-	if ( (newrow >= 12) && ( rows[newrow] != -1) && (rows[newrow] != (movecard - 3)) ) return false; //can only move next card in same rank onto filled foundations, previous cards in foundations will just be discarded.
+	if ( (newrow >= 12) && ( rows[newrow] == C_EMPTY) && (movecard >= 3) ) return false; // can only move aces onto empty foundations
+	if ( (newrow >= 12) && ( rows[newrow] != C_EMPTY) && (rows[newrow] != (movecard - 3)) ) return false; //can only move next card in same rank onto filled foundations, previous cards in foundations will just be discarded.
 
 	//at this point, all moves are legal, so let's remove the card from its old location
 
 	int pcard = find_parent(movecard);
-	if (pcard != -1) cards[pcard].next = -1;
-	if (rows[oldrow] == movecard) rows[oldrow] = -1;
+	if (pcard != C_EMPTY) cards[pcard].next = C_EMPTY;
+	if (rows[oldrow] == movecard) rows[oldrow] = C_EMPTY;
 
 	//and put it into the new one
 
 	int lcard = lastcard(newrow);
-	if ( (newrow >= 12) || (lcard == -1) ) {
+	if ( (newrow >= 12) || (lcard == C_EMPTY) ) {
 
 		//empty row or foundation
 		rows[newrow] = movecard; return true;
@@ -210,15 +217,19 @@ int clear_row(int row, int offset, int num) {
 
 void draw_card(int ccard, int xpos, int ypos) {
 
-	if ((selcard == ccard) && (selcard != -1))
+	if ((selcard == ccard) && (selcard != C_EMPTY))
 		wattron(screen, A_REVERSE);
-	if (ccard == -1) wattron(screen, COLOR_PAIR(CPAIR_MAGENTA));
+	if (ccard == C_EMPTY) wattron(screen, COLOR_PAIR(CPAIR_MAGENTA));
 	mvwprintw(screen,ypos,xpos,"[   ]");
-	if (ccard == -1) wattroff(screen, COLOR_PAIR(CPAIR_MAGENTA));
-	if (ccard == -1) return;
-	wattron(screen,A_BOLD | COLOR_PAIR( ((ccard == FLOWER) || (ccard == DRAGONSTACK)) ? CPAIR_MAGENTA : 1+(ccard%3) ));
+	if (ccard == C_EMPTY) wattroff(screen, COLOR_PAIR(CPAIR_MAGENTA));
+	if (ccard == C_EMPTY) return;
+	wattron(screen,A_BOLD | COLOR_PAIR( ((ccard == FLOWER) || (ccard == C_DRAGONSTACK)) ? CPAIR_MAGENTA : 1+(ccard%3) ));
 
-	if (ccard == DRAGONSTACK) {
+	if (showcardnum) {
+		mvwprintw(screen,ypos,xpos+1,"%3d",ccard);
+	} else {
+
+	if (ccard == C_DRAGONSTACK) {
 		mvwprintw(screen,ypos,xpos+1,"-*-");
 	} else if (ccard < 27) {
 		mvwprintw(screen,ypos,xpos+1,"%c%c",cardvals[ccard / 3],cardsuits[ccard % 3]);
@@ -227,14 +238,15 @@ void draw_card(int ccard, int xpos, int ypos) {
 	} else {
 		mvwprintw(screen,ypos,xpos+1," @ ");
 	}
+	}
 	wattroff(screen,A_BOLD | COLOR_PAIR(1+(ccard%3)));
 
-	if ((selcard == ccard) && (selcard != -1))
+	if ((selcard == ccard) && (selcard != C_EMPTY))
 		wattroff(screen, A_REVERSE);
 }
 
 int find_freecell() {
-	for (int i=8; i<11; i++) if (rows[i] == -1) return i;
+	for (int i=8; i<11; i++) if (rows[i] == C_EMPTY) return i;
 	return -1;
 }
 
@@ -333,12 +345,12 @@ void draw_cards() {
 
 int get_card(int row, int pos, int* o_pos) {
 
-	if (row >= 15) return -1;
+	if (row >= 15) return C_EMPTY;
 	if (row >= 8) return rows[row];
 
 	int curpos = 0;
 	int ccard = rows[row];
-	while ((ccard >= 0) && (cards[ccard].next != -1) && (curpos != pos)) {
+	while ((ccard >= 0) && (cards[ccard].next != C_EMPTY) && (curpos != pos)) {
 		ccard = cards[ccard].next;
 		curpos++;
 	}
@@ -387,7 +399,8 @@ int auto_move(void) {
 
 int main(int argc, char** argv) {
 
-	for (int i=0; i<40; i++) cards[i].next = -1;
+	for (int i=0; i<40; i++) cards[i].next = C_EMPTY;
+	for (int i=0; i<15; i++) rows[i] = C_EMPTY;
 
 	int opt = -1;
 
@@ -396,7 +409,7 @@ int main(int argc, char** argv) {
 	while ((opt = getopt(argc, argv, "dvDF")) != -1) {
 		switch (opt) {
 			case 'd':
-				//dbgmode = 1;
+				dbgmode = 1;
 				printf("Press ENTER to start (feel free to attach a debugger to this process at this moment).\n");
 				getc(stdin);
 				break;
@@ -485,7 +498,7 @@ int main(int argc, char** argv) {
 	int selpos = -1;
 	
 	do {
-		if ((selrow == -1) && (selpos == -1) && (selcard == -1)) while (auto_move()) {};
+		if ((selrow == -1) && (selpos == -1) && (selcard == C_EMPTY)) while (auto_move()) {};
 		draw_cards();
 		c = wgetch(screen);
 
@@ -496,7 +509,7 @@ int main(int argc, char** argv) {
 				//go up in the same row
 
 				int newcard = get_card(selrow,selpos - 1,&selpos);
-				if (card_can_be_stacked(newcard,selcard)) selcard = newcard; else {beep(); selrow = -1; selpos = -1; selcard = -1;}
+				if (card_can_be_stacked(newcard,selcard)) selcard = newcard; else {beep(); selrow = -1; selpos = -1; selcard = C_EMPTY;}
 			} else {
 				//pick a different row
 				int newcard = get_card(newrow, -1, &selpos);
@@ -507,8 +520,8 @@ int main(int argc, char** argv) {
 					if (r) clear_row(selrow,stacklen(rows[selrow]),stacklen(selcard));
 					selrow = -1;
 					selpos = -1;
-					selcard = -1;
-				} else if (newcard == -1) {
+					selcard = C_EMPTY;
+				} else if (newcard == C_EMPTY) {
 					beep();
 				} else {
 					selrow = newrow;
@@ -518,9 +531,9 @@ int main(int argc, char** argv) {
 		} else if ((x = strchr(rowkeys,(char)(tolower(c)) )) != NULL) {
 			int newrow = x - rowkeys;
 			int newcard = get_card(newrow, -1, &selpos);
-			int nextcard = -1;
+			int nextcard = C_EMPTY;
 
-			while ((selpos > 0) && ((nextcard = get_card(newrow, selpos-1,&selpos)) != -1) && (card_can_be_stacked(nextcard,newcard)) ) newcard = nextcard;
+			while ((selpos > 0) && ((nextcard = get_card(newrow, selpos-1,&selpos)) != C_EMPTY) && (card_can_be_stacked(nextcard,newcard)) ) newcard = nextcard;
 
 			selrow = newrow;
 			selcard = newcard;
@@ -530,12 +543,14 @@ int main(int argc, char** argv) {
 			int r = exposed_dragons();
 			int suit = c - '4';
 			if (r & (1 << suit)) remove_exposed_dragons(suit);
-			selrow = -1; selpos = -1; selcard = -1;
+			selrow = -1; selpos = -1; selcard = C_EMPTY;
 		}
 
 		if (c == ' ') {
 			selrow = -1; selpos = -1; selcard = -1;
 		}
+
+		if ((c == 'n') && (dbgmode == 1)) showcardnum = !showcardnum;
 
 	} while (c != 'Q' && c != 27);	
 
