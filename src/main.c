@@ -348,7 +348,7 @@ int get_card(int row, int pos, int* o_pos) {
 
 int auto_move(void) {
 
-	for (int i=0; i < 8; i++) {
+	for (int i=0; i < 11; i++) {
 
 		int lc = lastcard(i);
 		int fc = -1; //stores the appropriate foundation
@@ -508,6 +508,8 @@ int main(int argc, char** argv) {
 					selrow = -1;
 					selpos = -1;
 					selcard = -1;
+				} else if (newcard == -1) {
+					beep();
 				} else {
 					selrow = newrow;
 					selcard = newcard;
