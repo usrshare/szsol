@@ -282,8 +282,9 @@ int exposed_dragons() {
 int remove_exposed_dragons(int suit) {
 
 	for (int i=0; i < 11; i++) {
-		if ((lastcard(i) >= FIRSTDRAGON) && (lastcard(i) < FLOWER) && ((lastcard(i)%3 == suit)) ) {
-			remove_card(lastcard(i));
+		int lc = lastcard(i);
+		if ((lc >= FIRSTDRAGON) && (lc < FLOWER) && ((lc%3) == suit) ) {
+			remove_card(lc);
 			clear_row(i,stacklen(rows[i]),1);
 		}
 	}
