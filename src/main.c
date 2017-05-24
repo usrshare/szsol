@@ -396,6 +396,9 @@ int auto_move(void) {
 	return false;
 }
 
+unsigned int flip_bits(unsigned int value) {
+	return ( ((value & 0x000000FF) << 24) | ((value & 0x0000FF00) << 8) | ((value & 0x00FF0000) >> 8) | ((value & 0xFF000000) >> 24) );
+}
 
 
 int main(int argc, char** argv) {
@@ -405,9 +408,11 @@ int main(int argc, char** argv) {
 
 	int opt = -1;
 
+	int seed = flip_bits(time(NULL));
+
 	//int dbgmode = 0;
 
-	while ((opt = getopt(argc, argv, "dvDF")) != -1) {
+	while ((opt = getopt(argc, argv, "dvn:DF")) != -1) {
 		switch (opt) {
 			case 'd':
 				dbgmode = 1;
@@ -419,6 +424,9 @@ int main(int argc, char** argv) {
 				break;
 			case 'F':
 				rowkeys = azertykeys;
+				break;
+			case 'n':
+				seed = atoi(optarg);
 				break;
 			case 'v':
 				printf( 
@@ -432,8 +440,11 @@ int main(int argc, char** argv) {
 			case '?':
 			default: /* '?' */
 				fprintf(stderr, 
-"Usage: %s [-d] [-v]\n"
+"Usage: %s [-d] [-D | -F] [-n number] [-v]\n"
 "\t-d : Debug mode.\n"
+"\t-D : Use the QWERTZ keyboard layout.\n"
+"\t-F : Use the AZERTY keyboard layout.\n"
+"\t-n [number] : Start with a predetermined card layout based on a seed number. \n"
 "\t-v : Version / credits.\n"
 "\n"
 "How to play:\n"
@@ -486,11 +497,12 @@ int main(int argc, char** argv) {
 	
 	keypad(screen,true);
 	box(screen,0,0);
+
 	wrefresh(screen);
 
 	wincount = get_win_count();
 
-	srand(time(NULL));
+	srand(seed);
 	int randcards[NUMCARDS];
 	for (int i=0; i<40; i++) randcards[i] = 39-i;
 	for (int i=0; i<39; i++) {
@@ -508,6 +520,10 @@ int main(int argc, char** argv) {
 
 	int selrow = -1;
 	int selpos = -1;
+	
+	wattron(screen,COLOR_PAIR(CPAIR_MAGENTA));
+	mvwprintw(screen,22,2,"Game #%u",seed);
+	wattroff(screen,COLOR_PAIR(CPAIR_MAGENTA));
 	
 	do {
 		if ((selrow == -1) && (selpos == -1) && (selcard == C_EMPTY)) while (auto_move()) {};
