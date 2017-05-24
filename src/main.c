@@ -472,6 +472,17 @@ int main(int argc, char** argv) {
 	init_pair(CPAIR_MAGENTA,COLOR_MAGENTA,COLOR_BLACK);
 
 	screen = newwin(24,80,(LINES-24)/2,(COLS-80) / 2);
+
+	int real_x = -1, real_y = -1;
+	getmaxyx(screen, real_x, real_y);
+	if (real_x != 24 && real_y != 80) {
+		endwin();
+		fprintf(stderr, 
+			"Terminal window is too small.\n"
+			"Minimum terminal window size: 24x80.\n");
+		return -1;
+	}
+	
 	keypad(screen,true);
 	box(screen,0,0);
 	wrefresh(screen);
