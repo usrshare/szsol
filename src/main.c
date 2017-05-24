@@ -545,7 +545,9 @@ int main(int argc, char** argv) {
 			int newcard = get_card(newrow, -1, &selpos);
 			int nextcard = C_EMPTY;
 
-			while ((selpos > 0) && ((nextcard = get_card(newrow, selpos-1,&selpos)) != C_EMPTY) && (card_can_be_stacked(nextcard,newcard)) ) newcard = nextcard;
+			int newpos = selpos;
+
+			while ((selpos > 0) && ((nextcard = get_card(newrow, newpos-1,&newpos)) != C_EMPTY) && (card_can_be_stacked(nextcard,newcard)) ) { newcard = nextcard; selpos = newpos; }
 
 			selrow = newrow;
 			selcard = newcard;
