@@ -218,13 +218,21 @@ int clear_row(int row, int offset, int num) {
 
 void draw_card(int ccard, int xpos, int ypos) {
 
-	if ((selcard == ccard) && (selcard != C_EMPTY))
-		wattron(screen, A_REVERSE);
+	bool selected = ((selcard != C_EMPTY) && (selcard == ccard));
+	int suit_attr = (A_BOLD | COLOR_PAIR( ((ccard == FLOWER) || (ccard == C_DRAGONSTACK)) ? CPAIR_MAGENTA : 1+(ccard%3)) );
+
+	//draw the border
+
+	if (selected) wattron(screen, A_REVERSE | suit_attr);
 	if (ccard == C_EMPTY) wattron(screen, COLOR_PAIR(CPAIR_MAGENTA));
 	mvwprintw(screen,ypos,xpos,"[   ]");
 	if (ccard == C_EMPTY) wattroff(screen, COLOR_PAIR(CPAIR_MAGENTA));
+	if (selected) wattroff(screen, A_REVERSE | suit_attr);
+	
+	//draw the card itself
+
 	if (ccard == C_EMPTY) return;
-	wattron(screen,A_BOLD | COLOR_PAIR( ((ccard == FLOWER) || (ccard == C_DRAGONSTACK)) ? CPAIR_MAGENTA : 1+(ccard%3) ));
+	wattron(screen, (selected ? A_REVERSE : 0) | suit_attr);
 
 	if (showcardnum) {
 		mvwprintw(screen,ypos,xpos+1,"%3d",ccard);
@@ -240,10 +248,9 @@ void draw_card(int ccard, int xpos, int ypos) {
 		mvwprintw(screen,ypos,xpos+1," @ ");
 	}
 	}
-	wattroff(screen,A_BOLD | COLOR_PAIR(1+(ccard%3)));
+	
+	wattroff(screen, (selected ? A_REVERSE : 0) | suit_attr);
 
-	if ((selcard == ccard) && (selcard != C_EMPTY))
-		wattroff(screen, A_REVERSE);
 }
 
 int find_freecell() {
