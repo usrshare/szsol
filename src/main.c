@@ -135,6 +135,7 @@ int find_parent(int card) {
 	for (int i=0; i < 8; i++) {
 		int curcard = rows[i];
 		if (curcard == card) return C_EMPTY;
+		if (curcard == C_EMPTY) continue;  // if the row is empty, skip it
 		while (cards[curcard].next >= 0) {
 			if(cards[curcard].next == card) return curcard;
 			curcard = cards[curcard].next;
