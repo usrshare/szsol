@@ -8,7 +8,7 @@ separate game on
 [Steam](http://store.steampowered.com/app/570490/SHENZHEN_SOLITAIRE/) and the
 [App Store](https://itunes.apple.com/tw/app/shenzhen-solitaire/id1206037778).
 
-![Screenshot](http://i.imgur.com/e7jLImv.png)
+![Screenshot](http://i.imgur.com/OuKukrl.png)
 
 # Compiling
 
