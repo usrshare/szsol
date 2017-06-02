@@ -52,4 +52,7 @@ dedicated area automatically as soon as possible.
  * 8,9,0: select foundations
  * [space bar]: remove selection
  * 4,5,6: move dragon cards onto a free cell (when available)
- * Shift+Q or Ctrl+C -- quit.
+ * Shift+Q or Ctrl+C: quit.
+ * Z: restart the game
+   (all cards will move to the same positions they were in
+   at the start of the game)
