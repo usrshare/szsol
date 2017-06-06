@@ -37,8 +37,8 @@ order (9->8->7), but only if the suits alternate.
 Dragons (labeled with dashes) can't be stacked -- but when all four dragons
 of a single suit are exposed, they can be moved into a single free cell.
 
-The free cells are empty areas where one of any card can be stored. (With the
-exception of the dragons, which, as stated before, can be moved into a single
+The free cells are empty areas where one of any card can be stored. (But, as
+stated before, four dragons of the same color can also be moved into a single 
 cell when possible.)
 
 The flower (labeled '@') is a purely decorative card and will be moved to its
