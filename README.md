@@ -53,6 +53,7 @@ dedicated area automatically as soon as possible.
  * [space bar]: remove selection
  * 4,5,6: move dragon cards onto a free cell (when available)
  * Shift+Q or Ctrl+C: quit.
- * Z: restart the game
+ * Z (QWERTY mode only) or F3: restart the game
    (all cards will move to the same positions they were in
    at the start of the game)
+ * F2: start a new game

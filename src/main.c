@@ -48,10 +48,11 @@ bool showcardnum = false;
 
 const char* cardvals = "123456789****@";
 const char* cardsuits = "OIX";
-const char* rowkeys =    "wertyuio123@890";
+
+const char* rowkeys =    NULL;
+const char* qwertykeys = "wertyuio123@890";
 const char* qwertzkeys = "wertzuio123@890";
 const char* azertykeys = "zertyuio123@890";
-
 
 unsigned int set_win_count(unsigned int value) {
 	char* homedir = getenv("HOME");
@@ -438,6 +439,10 @@ bool yes_or_no (const char* text, int color) {
 	}
 }
 
+int new_seed (void) {
+	return flip_bits(time(NULL));
+}
+
 int init_board (int seed) {
 	
 	int oldstacklens[ROWCOUNT];
@@ -471,7 +476,7 @@ int main(int argc, char** argv) {
 
 	int opt = -1;
 
-	int seed = flip_bits(time(NULL));
+	int seed = new_seed();
 
 	//int dbgmode = 0;
 
@@ -532,6 +537,8 @@ int main(int argc, char** argv) {
 				return 0;
 		}
 	}
+
+	if (rowkeys == NULL) rowkeys = qwertykeys;
 
 	initscr();
 #ifdef NCURSES_VERSION
@@ -653,8 +660,14 @@ int main(int argc, char** argv) {
 
 		if ((c == 'Q') || (c == 27)) { if (yes_or_no("Quit?", CPAIR_WARNING)) loop = false; } 
 		
-		if ((c == 'z')) { if (yes_or_no("Restart this game?", CPAIR_WARNING)) selrow = -1; selpos = -1; selcard = -1; init_board(seed);
-	       if (won_game) update_status("Winning this exact game once again won't increase your win count.", CPAIR_WARNING);	} 
+		if ( ((rowkeys == qwertykeys) && (c == 'z')) || (c == KEY_F(3)) ) {
+			if (yes_or_no("Restart this game?", CPAIR_WARNING)) { selrow = -1; selpos = -1; selcard = -1; init_board(seed);
+			if (won_game) update_status("Winning this exact game once again won't increase your win count.", CPAIR_WARNING); } 
+		}
+		
+		if ( (c == 'n') || (c == KEY_F(2)) ) {
+			if (yes_or_no("Start a new game?", CPAIR_WARNING)) { won_game = 0; seed = new_seed(); selrow = -1; selpos = -1; selcard = -1; init_board(seed); }
+		}
 
 	} while (loop);	
 
