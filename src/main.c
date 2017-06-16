@@ -16,6 +16,8 @@
 bool won_game = 0;
 unsigned int wincount = 0;
 
+int seed = 0;
+
 enum cpairs {
 	CPAIR_DEFAULT = 0,
 	CPAIR_RED,
@@ -347,7 +349,7 @@ void draw_cards() {
 
 			wattron(screen,A_BOLD | COLOR_PAIR(CPAIR_MAGENTA));
 			mvwprintw(screen,13,32,"Y O U   W I N !");
-			if (!won_game) { wincount++; set_win_count(wincount); won_game = true; }
+			if (!won_game) { if (seed >= 0) { wincount++; set_win_count(wincount); } won_game = true; }
 			wattron(screen,A_BOLD | COLOR_PAIR(CPAIR_MAGENTA));
 			}
  
@@ -411,10 +413,6 @@ int auto_move(void) {
 	return false;
 }
 
-unsigned int flip_bits(unsigned int value) {
-	return ( ((value & 0x000000FF) << 24) | ((value & 0x0000FF00) << 8) | ((value & 0x00FF0000) >> 8) | ((value & 0xFF000000) >> 24) );
-}
-
 void update_status (const char* text, int color) {
 	wattron(statusbar, A_BOLD | COLOR_PAIR(color));
 	wbkgd(statusbar, A_BOLD | COLOR_PAIR(color));
@@ -440,7 +438,8 @@ bool yes_or_no (const char* text, int color) {
 }
 
 int new_seed (void) {
-	return flip_bits(time(NULL));
+	unsigned int t = time(NULL);
+	return rand_r(&t);
 }
 
 int init_board (int seed) {
@@ -454,11 +453,14 @@ int init_board (int seed) {
 	srand(seed);
 	int randcards[NUMCARDS];
 	for (int i=0; i<40; i++) randcards[i] = 39-i;
+	
+	if (seed != -1) {
 	for (int i=0; i<39; i++) {
 		int j = i + (rand() % (40-i));
 		int rc = randcards[i];
 		randcards[i] = randcards[j];
 		randcards[j] = rc;
+	}
 	}
 
 	for (int i=0; i < 40; i++) {
@@ -472,11 +474,22 @@ int init_board (int seed) {
 	return 0;
 }
 
+int draw_initial_screen(void) {
+	wclear(screen);
+	box(screen,0,0);
+	update_status ("Welcome to szsol!", CPAIR_INFO);
+	wattron(screen,COLOR_PAIR(CPAIR_MAGENTA));
+	mvwprintw(screen,21,2,"Game #%d",seed);
+	wattroff(screen,COLOR_PAIR(CPAIR_MAGENTA));
+	wrefresh(screen);
+	return 0;
+}
+
 int main(int argc, char** argv) {
 
 	int opt = -1;
 
-	int seed = new_seed();
+	seed = new_seed();
 
 	//int dbgmode = 0;
 
@@ -568,9 +581,6 @@ int main(int argc, char** argv) {
 	statusbar = newwin(1,80,(LINES-24)/2 + 23, (COLS-80) / 2);
 	
 	keypad(screen,true);
-	box(screen,0,0);
-
-	wrefresh(screen);
 
 	wincount = get_win_count();
 	
@@ -586,14 +596,11 @@ int main(int argc, char** argv) {
 	int selrow = -1;
 	int selpos = -1;
 	
-	wattron(screen,COLOR_PAIR(CPAIR_MAGENTA));
-	mvwprintw(screen,21,2,"Game #%u",seed);
-	wattroff(screen,COLOR_PAIR(CPAIR_MAGENTA));
+	draw_initial_screen();
+	
 
 	bool loop = true;
-
-	update_status ("Welcome to szsol!", CPAIR_INFO);
-
+	
 	do {
 		if ((selrow == -1) && (selpos == -1) && (selcard == C_EMPTY)) while (auto_move()) {};
 		draw_cards();
@@ -661,12 +668,19 @@ int main(int argc, char** argv) {
 		if ((c == 'Q') || (c == 27)) { if (yes_or_no("Quit?", CPAIR_WARNING)) loop = false; } 
 		
 		if ( ((rowkeys == qwertykeys) && (c == 'z')) || (c == KEY_F(3)) ) {
-			if (yes_or_no("Restart this game?", CPAIR_WARNING)) { selrow = -1; selpos = -1; selcard = -1; init_board(seed);
+				
+			if (yes_or_no("Restart this game?", CPAIR_WARNING)) { 
+				selrow = -1; selpos = -1; selcard = -1; 
+				init_board(seed); 
+				draw_initial_screen(); 
 			if (won_game) update_status("Winning this exact game once again won't increase your win count.", CPAIR_WARNING); } 
 		}
 		
 		if ( (c == 'n') || (c == KEY_F(2)) ) {
-			if (yes_or_no("Start a new game?", CPAIR_WARNING)) { won_game = 0; seed = new_seed(); selrow = -1; selpos = -1; selcard = -1; init_board(seed); }
+			if (yes_or_no("Start a new game?", CPAIR_WARNING)) { 
+				won_game = 0; seed = new_seed(); selrow = -1; selpos = -1; selcard = -1; init_board(seed); 
+				draw_initial_screen();
+			}
 		}
 
 	} while (loop);	
