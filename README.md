@@ -56,4 +56,5 @@ dedicated area automatically as soon as possible.
  * Z (QWERTY mode only) or F3: restart the game
    (all cards will move to the same positions they were in
    at the start of the game)
- * F2: start a new game
+ * N or F2: start a new game
+ * Shift+N or F4: start a specifically-numbered game

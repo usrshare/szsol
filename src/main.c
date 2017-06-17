@@ -422,6 +422,40 @@ void update_status (const char* text, int color) {
 	wrefresh(statusbar);	
 }
 
+bool ask_string (const char* prompt, int color, char* output, unsigned int o_sz) {
+	wattron(statusbar, A_BOLD | COLOR_PAIR(color));
+	werase(statusbar);
+	wbkgd(statusbar, A_BOLD | COLOR_PAIR(color));
+	mvwprintw(statusbar, 0, 0, "%s: >", prompt);
+	echo();		
+	int r = wgetnstr(statusbar,output,o_sz);
+	noecho();
+	wattroff(statusbar, A_BOLD | COLOR_PAIR(color));	
+
+	if (r == OK) return true; else return false;
+}
+
+bool ask_integer (const char* prompt, int color, int* output) {
+
+	char temp[21];
+	temp[0] = 0;
+
+	while (true) {
+
+	errno = 0;
+	int str = ask_string(prompt,color,temp,20); 	
+	
+	if (!str) return false;
+
+	char* endptr = temp;
+	int num = strtol(temp,&endptr,0);
+	if (strlen(temp) == 0) return false;
+
+	if ( (errno != 0) || ((endptr - temp) < strlen(temp)) ) { beep(); } else { *output = num; return true; }
+
+	}
+}
+
 bool yes_or_no (const char* text, int color) {
 	
 	wattron(statusbar, A_BOLD | COLOR_PAIR(color));
@@ -681,6 +715,14 @@ int main(int argc, char** argv) {
 				won_game = 0; seed = new_seed(); selrow = -1; selpos = -1; selcard = -1; init_board(seed); 
 				draw_initial_screen();
 			}
+		}
+
+		if ( (c == 'N') || (c == KEY_F(4)) ) {
+			if (ask_integer("Input game # for a new game or empty string to cancel", CPAIR_WARNING, &seed)) {
+			selrow = -1; selpos = -1; selcard = -1;
+			init_board(seed);
+			draw_initial_screen();
+			} else update_status("Continuing existing game.", CPAIR_INFO);	
 		}
 
 	} while (loop);	
