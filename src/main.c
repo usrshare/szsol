@@ -603,7 +603,7 @@ int main(int argc, char** argv) {
 	init_pair(CPAIR_WARNING,COLOR_WHITE,COLOR_YELLOW);
 	init_pair(CPAIR_ERROR,COLOR_WHITE,COLOR_RED);
 	
-	if (LINES < 24 && COLS < 80) {
+	if (LINES < 24 || COLS < 80) {
 		endwin();
 		fprintf(stderr, 
 			"Terminal window is too small.\n"
