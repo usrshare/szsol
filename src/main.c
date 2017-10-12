@@ -16,18 +16,72 @@
 bool won_game = 0;
 unsigned int wincount = 0;
 
+int curtheme = 0;
+
 int seed = 0;
 
 enum cpairs {
-	CPAIR_DEFAULT = 0,
+	CPAIR_NONE = 0,
+	CPAIR_DEFAULT,
+	CPAIR_BORDER,
+	CPAIR_CARD,
 	CPAIR_RED,
 	CPAIR_GREEN,
 	CPAIR_BLUE,
-	CPAIR_MAGENTA,
+	CPAIR_FLOWER,
+	CPAIR_LABEL,
 	CPAIR_INFO,
 	CPAIR_WARNING,
-	CPAIR_ERROR
+	CPAIR_ERROR,
+	CPAIR_COUNT
 };
+
+struct themeinfo {
+	int colors[CPAIR_COUNT][2];
+	int card_attr;
+	int cardborder_attr;
+	int selected_attr;
+};
+
+struct themeinfo themes[] = {
+{
+	.colors = {
+	{COLOR_WHITE,COLOR_BLACK}, //default
+	{COLOR_WHITE,COLOR_BLACK}, //border
+	{COLOR_WHITE,COLOR_BLACK}, //default card
+	{COLOR_RED,COLOR_BLACK}, //red card
+	{COLOR_GREEN,COLOR_BLACK}, //green card
+	{COLOR_BLUE,COLOR_BLACK}, //blue card
+	{COLOR_MAGENTA,COLOR_BLACK}, //flower
+	{COLOR_MAGENTA,COLOR_BLACK}, //labels
+	{COLOR_WHITE,COLOR_BLUE}, //info statusbar
+	{COLOR_WHITE,COLOR_YELLOW}, //question statusbar
+	{COLOR_WHITE,COLOR_RED}, //error statusbar
+	},
+	.card_attr = A_BOLD,
+	.cardborder_attr = 0,
+	.selected_attr = A_REVERSE,
+},
+{
+	.colors = {
+	{COLOR_WHITE,COLOR_CYAN}, //default
+	{COLOR_BLACK,COLOR_CYAN}, //border
+	{COLOR_BLACK,COLOR_WHITE}, //default card
+	{COLOR_RED,COLOR_WHITE}, //red card
+	{COLOR_GREEN,COLOR_WHITE}, //green card
+	{COLOR_BLUE,COLOR_WHITE}, //blue card
+	{COLOR_MAGENTA,COLOR_WHITE}, //flower
+	{COLOR_BLACK,COLOR_CYAN}, //labels
+	{COLOR_WHITE,COLOR_BLUE}, //info statusbar
+	{COLOR_WHITE,COLOR_YELLOW}, //question statusbar
+	{COLOR_WHITE,COLOR_RED}, //error statusbar
+	},
+	.card_attr = 0,
+	.cardborder_attr = A_BOLD,
+	.selected_attr = A_BLINK,
+},
+};
+
 #define NINES 24
 #define FIRSTDRAGON 27
 #define FLOWER 39
@@ -228,20 +282,22 @@ int clear_row(int row, int offset, int num) {
 void draw_card(int ccard, int xpos, int ypos) {
 
 	bool selected = ((selcard != C_EMPTY) && (selcard == ccard));
-	int suit_attr = (A_BOLD | COLOR_PAIR( ((ccard == FLOWER) || (ccard == C_DRAGONSTACK)) ? CPAIR_MAGENTA : 1+(ccard%3)) );
+	int suit_attr = (themes[curtheme].card_attr | COLOR_PAIR( ((ccard == FLOWER) || (ccard == C_DRAGONSTACK)) ? CPAIR_FLOWER : CPAIR_RED+(ccard%3)) );
 
 	//draw the border
 
-	if (selected) wattron(screen, A_REVERSE | suit_attr);
-	if (ccard == C_EMPTY) wattron(screen, COLOR_PAIR(CPAIR_MAGENTA));
+	if (selected) wattron(screen, themes[curtheme].selected_attr | suit_attr);
+	else if (ccard == C_EMPTY) wattron(screen, COLOR_PAIR(CPAIR_LABEL));
+	else wattron(screen,themes[curtheme].cardborder_attr | COLOR_PAIR(CPAIR_CARD));
 	mvwprintw(screen,ypos,xpos,"[   ]");
-	if (ccard == C_EMPTY) wattroff(screen, COLOR_PAIR(CPAIR_MAGENTA));
-	if (selected) wattroff(screen, A_REVERSE | suit_attr);
+	if (ccard == C_EMPTY) wattroff(screen, COLOR_PAIR(CPAIR_LABEL));
+	else if (selected) wattroff(screen, themes[curtheme].selected_attr | suit_attr);
+	else wattroff(screen,themes[curtheme].cardborder_attr | COLOR_PAIR(CPAIR_CARD));
 	
 	//draw the card itself
 
 	if (ccard == C_EMPTY) return;
-	wattron(screen, (selected ? A_REVERSE : 0) | suit_attr);
+	wattron(screen, (selected ? themes[curtheme].selected_attr : 0) | suit_attr);
 
 	if (showcardnum) {
 		mvwprintw(screen,ypos,xpos+1,"%3d",ccard);
@@ -258,7 +314,7 @@ void draw_card(int ccard, int xpos, int ypos) {
 	}
 	}
 	
-	wattroff(screen, (selected ? A_REVERSE : 0) | suit_attr);
+	wattroff(screen, (selected ? themes[curtheme].selected_attr : 0) | suit_attr);
 
 }
 
@@ -314,28 +370,28 @@ void draw_cards() {
 	for (int i=0; i < 3; i++) {
 		draw_card(rows[8+i], 2 + i*7, 2);
 		draw_card(rows[12+i], 58 + i*7, 2);
-		wattron(screen, COLOR_PAIR(CPAIR_MAGENTA));
+		wattron(screen, COLOR_PAIR(CPAIR_LABEL));
 		mvwaddch(screen, 1, 4 + i*7, rowkeys[8+i]);
 		mvwaddch(screen, 1, 60 + i*7, rowkeys[12+i]);
-		wattroff(screen, COLOR_PAIR(CPAIR_MAGENTA));
+		wattroff(screen, COLOR_PAIR(CPAIR_LABEL));
 	}
 	draw_card(rows[11], 38, 2);
 
 	int r = exposed_dragons();
 	for (int i=0; i < 3; i++) {
-		wattron(screen, COLOR_PAIR(CPAIR_MAGENTA));
+		wattron(screen, COLOR_PAIR(CPAIR_LABEL));
 		mvwprintw(screen, 1, 23 + (i*4), "%d", 4 + i);
-		wattroff(screen, COLOR_PAIR(CPAIR_MAGENTA));
+		wattroff(screen, COLOR_PAIR(CPAIR_LABEL));
 		
-		wattron(screen, ( (r & (1 << i)) ? A_BOLD : 0 ) | COLOR_PAIR(i+1));
+		wattron(screen, ( (r & (1 << i)) ? A_BOLD : 0 ) | COLOR_PAIR(i+CPAIR_RED));
 		mvwprintw(screen, 2, 22 + (i*4), "(%c)", (r & (1 << i)) ? cardsuits[i] : ' ');
-		wattroff(screen, ( (r & (1 << i)) ? A_BOLD : 0 ) | COLOR_PAIR(i+1));
+		wattroff(screen, ( (r & (1 << i)) ? A_BOLD : 0 ) | COLOR_PAIR(i+CPAIR_RED));
 	}
 
 	for (int i=0; i < 8; i++) {
-		wattron(screen, COLOR_PAIR(CPAIR_MAGENTA));
+		wattron(screen, COLOR_PAIR(CPAIR_LABEL));
 		mvwaddch(screen, 4, 8 + i*9, rowkeys[i]);
-		wattroff(screen, COLOR_PAIR(CPAIR_MAGENTA));
+		wattroff(screen, COLOR_PAIR(CPAIR_LABEL));
 		int ccard = rows[i];
 		int ypos = 0;
 		do {
@@ -347,15 +403,15 @@ void draw_cards() {
 
 	if ((rows[8] == -2) && (rows[9] == -2) && (rows[10] == -2) && (rows[12] >= NINES) && (rows[13] >= NINES) && (rows[14] >= NINES)) {
 
-			wattron(screen,A_BOLD | COLOR_PAIR(CPAIR_MAGENTA));
+			wattron(screen,A_BOLD | COLOR_PAIR(CPAIR_LABEL));
 			mvwprintw(screen,13,32,"Y O U   W I N !");
 			if (!won_game) { if (seed >= 0) { wincount++; set_win_count(wincount); } won_game = true; }
-			wattron(screen,A_BOLD | COLOR_PAIR(CPAIR_MAGENTA));
+			wattron(screen,A_BOLD | COLOR_PAIR(CPAIR_LABEL));
 			}
  
-	wattron(screen,(won_game ? A_BOLD : 0) | COLOR_PAIR(CPAIR_MAGENTA));
+	wattron(screen,(won_game ? A_BOLD : 0) | COLOR_PAIR(CPAIR_LABEL));
 	mvwprintw(screen,21,68,"%5d win%c",wincount, ((wincount%10 != 1) || (wincount == 11)) ? 's' : ' ');
-	wattroff(screen,(won_game ? A_BOLD : 0) | COLOR_PAIR(CPAIR_MAGENTA));
+	wattroff(screen,(won_game ? A_BOLD : 0) | COLOR_PAIR(CPAIR_LABEL));
 
 	wrefresh(screen);
 }
@@ -509,12 +565,15 @@ int init_board (int seed) {
 }
 
 int draw_initial_screen(void) {
+	wbkgdset(screen, COLOR_PAIR(CPAIR_DEFAULT));
 	wclear(screen);
+	wattron(screen, COLOR_PAIR(CPAIR_BORDER));
 	box(screen,0,0);
+	wattroff(screen, COLOR_PAIR(CPAIR_BORDER));
 	update_status ("Welcome to szsol!", CPAIR_INFO);
-	wattron(screen,COLOR_PAIR(CPAIR_MAGENTA));
+	wattron(screen,COLOR_PAIR(CPAIR_LABEL));
 	mvwprintw(screen,21,2,"Game #%d",seed);
-	wattroff(screen,COLOR_PAIR(CPAIR_MAGENTA));
+	wattroff(screen,COLOR_PAIR(CPAIR_LABEL));
 	wrefresh(screen);
 	return 0;
 }
@@ -527,7 +586,7 @@ int main(int argc, char** argv) {
 
 	//int dbgmode = 0;
 
-	while ((opt = getopt(argc, argv, "dvn:DF")) != -1) {
+	while ((opt = getopt(argc, argv, "dvn:t:DF")) != -1) {
 		switch (opt) {
 			case 'd':
 				dbgmode = 1;
@@ -542,6 +601,10 @@ int main(int argc, char** argv) {
 				break;
 			case 'n':
 				seed = atoi(optarg);
+				break;
+			case 't':
+				curtheme = atoi(optarg);
+				if ( (curtheme < 0) || (curtheme >= ( (sizeof themes) / (sizeof themes[0]) ) ) ) { curtheme = 0; }
 				break;
 			case 'v':
 				printf( 
@@ -595,13 +658,9 @@ int main(int argc, char** argv) {
 	noecho();
 	start_color();
 
-	init_pair(CPAIR_BLUE,COLOR_BLUE,COLOR_BLACK);
-	init_pair(CPAIR_RED,COLOR_RED,COLOR_BLACK);
-	init_pair(CPAIR_GREEN,COLOR_GREEN,COLOR_BLACK);
-	init_pair(CPAIR_MAGENTA,COLOR_MAGENTA,COLOR_BLACK);
-	init_pair(CPAIR_INFO,COLOR_WHITE,COLOR_BLUE);
-	init_pair(CPAIR_WARNING,COLOR_WHITE,COLOR_YELLOW);
-	init_pair(CPAIR_ERROR,COLOR_WHITE,COLOR_RED);
+	for (int i=0; i < (CPAIR_COUNT-1); i++) {
+		init_pair(i+1,themes[curtheme].colors[i][0],themes[curtheme].colors[i][1]);
+	}
 	
 	if (LINES < 24 || COLS < 80) {
 		endwin();
