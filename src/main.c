@@ -801,7 +801,7 @@ int main(int argc, char** argv) {
 			} else update_status("Continuing existing game.", CPAIR_INFO);	
 		}
 
-		if ( (c == 'a') || (c == 'A') ) {
+		if ( ((rowkeys == qwertykeys) && ((c == 'a') || (c == 'A')) ) || (c == KEY_F(5)) ) {
 			use_automoves = !use_automoves;
 			update_status ( use_automoves ?
 				"Automatic moves enabled." :
