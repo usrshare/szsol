@@ -13,12 +13,16 @@
 
 #define NUMCARDS 40
 
+char animdash[4] = {'-','/','|','\\'};
+
 bool won_game = 0;
 unsigned int wincount = 0;
 
 int curtheme = 0;
 
 int seed = 0;
+
+bool use_automoves = true;
 
 enum cpairs {
 	CPAIR_NONE = 0,
@@ -106,9 +110,9 @@ const char* cardvals = "123456789****@";
 const char* cardsuits = "OIX";
 
 const char* rowkeys =    NULL;
-const char* qwertykeys = "wertyuio123@890";
-const char* qwertzkeys = "wertzuio123@890";
-const char* azertykeys = "zertyuio123@890";
+const char* qwertykeys = "wertyuio1237890";
+const char* qwertzkeys = "wertzuio1237890";
+const char* azertykeys = "zertyuio1237890";
 
 unsigned int set_win_count(unsigned int value) {
 	char* homedir = getenv("HOME");
@@ -372,6 +376,7 @@ void draw_cards() {
 		draw_card(rows[12+i], 58 + i*7, 2);
 		wattron(screen, COLOR_PAIR(CPAIR_LABEL));
 		mvwaddch(screen, 1, 4 + i*7, rowkeys[8+i]);
+		mvwaddch(screen, 1, 40, rowkeys[11]);
 		mvwaddch(screen, 1, 60 + i*7, rowkeys[12+i]);
 		wattroff(screen, COLOR_PAIR(CPAIR_LABEL));
 	}
@@ -690,12 +695,24 @@ int main(int argc, char** argv) {
 	int selpos = -1;
 	
 	draw_initial_screen();
-	
+	draw_cards();
 
 	bool loop = true;
+
+	int automoves = 0;
 	
 	do {
-		if ((selrow == -1) && (selpos == -1) && (selcard == C_EMPTY)) while (auto_move()) {};
+		if ((selrow == -1) && (selpos == -1) && (selcard == C_EMPTY)) {
+			
+			while (use_automoves && auto_move()) { 
+			automoves++;
+			mvwaddch(screen,1,COLS-2, animdash[automoves % 4]);
+			draw_cards();
+			if (automoves > 1) usleep(250000);
+			};
+		}
+		automoves = 0;
+		mvwaddch(screen,1,COLS-2,' ');
 		draw_cards();
 		c = wgetch(screen);
 
@@ -782,6 +799,13 @@ int main(int argc, char** argv) {
 			init_board(seed);
 			draw_initial_screen();
 			} else update_status("Continuing existing game.", CPAIR_INFO);	
+		}
+
+		if ( (c == 'a') || (c == 'A') ) {
+			use_automoves = !use_automoves;
+			update_status ( use_automoves ?
+				"Automatic moves enabled." :
+				"Automatic moves disabled.", CPAIR_INFO);
 		}
 
 	} while (loop);	
