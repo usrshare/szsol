@@ -5,9 +5,9 @@ SRCDIR=src
 
 _CC=gcc
 LD=ld
-CFLAGS = -std=c11 -Wall $(shell ncursesw5-config --cflags)
-DEFS += 
-LDFLAGS = $(shell ncursesw5-config --libs)
+CFLAGS = -std=c11 -Wall $(shell ncursesw6-config --cflags)
+DEFS += -D_POSIX_C_SOURCE
+LDFLAGS = $(shell ncursesw6-config --libs)
 
 _OBJS = main.o
 

@@ -33,6 +33,9 @@ enum cpairs {
 	CPAIR_GREEN,
 	CPAIR_BLUE,
 	CPAIR_FLOWER,
+	CPAIR_SEL_RED,
+	CPAIR_SEL_GREEN,
+	CPAIR_SEL_BLUE,
 	CPAIR_LABEL,
 	CPAIR_INFO,
 	CPAIR_WARNING,
@@ -57,6 +60,9 @@ struct themeinfo themes[] = {
 	{COLOR_GREEN,COLOR_BLACK}, //green card
 	{COLOR_BLUE,COLOR_BLACK}, //blue card
 	{COLOR_MAGENTA,COLOR_BLACK}, //flower
+	{COLOR_WHITE,COLOR_RED}, //selected red card
+	{COLOR_WHITE,COLOR_GREEN}, //selected green card
+	{COLOR_WHITE,COLOR_BLUE}, //selected blue card
 	{COLOR_MAGENTA,COLOR_BLACK}, //labels
 	{COLOR_WHITE,COLOR_BLUE}, //info statusbar
 	{COLOR_WHITE,COLOR_YELLOW}, //question statusbar
@@ -64,7 +70,7 @@ struct themeinfo themes[] = {
 	},
 	.card_attr = A_BOLD,
 	.cardborder_attr = 0,
-	.selected_attr = A_REVERSE,
+	.selected_attr = A_BOLD,
 },
 {
 	.colors = {
@@ -75,6 +81,9 @@ struct themeinfo themes[] = {
 	{COLOR_GREEN,COLOR_WHITE}, //green card
 	{COLOR_BLUE,COLOR_WHITE}, //blue card
 	{COLOR_MAGENTA,COLOR_WHITE}, //flower
+	{COLOR_WHITE,COLOR_RED}, //selected red card
+	{COLOR_WHITE,COLOR_GREEN}, //selected green card
+	{COLOR_WHITE,COLOR_BLUE}, //selected blue card
 	{COLOR_BLACK,COLOR_CYAN}, //labels
 	{COLOR_WHITE,COLOR_BLUE}, //info statusbar
 	{COLOR_WHITE,COLOR_YELLOW}, //question statusbar
@@ -82,7 +91,7 @@ struct themeinfo themes[] = {
 	},
 	.card_attr = 0,
 	.cardborder_attr = A_BOLD,
-	.selected_attr = A_BLINK,
+	.selected_attr = A_BOLD,
 },
 };
 
@@ -286,7 +295,7 @@ int clear_row(int row, int offset, int num) {
 void draw_card(int ccard, int xpos, int ypos) {
 
 	bool selected = ((selcard != C_EMPTY) && (selcard == ccard));
-	int suit_attr = (themes[curtheme].card_attr | COLOR_PAIR( ((ccard == FLOWER) || (ccard == C_DRAGONSTACK)) ? CPAIR_FLOWER : CPAIR_RED+(ccard%3)) );
+	int suit_attr = ((selected ? 0 : themes[curtheme].card_attr) | COLOR_PAIR( ((ccard == FLOWER) || (ccard == C_DRAGONSTACK)) ? CPAIR_FLOWER : selected ? CPAIR_SEL_RED + (ccard%3) : CPAIR_RED+(ccard%3) ) );
 
 	//draw the border
 
@@ -415,7 +424,7 @@ void draw_cards() {
 			}
  
 	wattron(screen,(won_game ? A_BOLD : 0) | COLOR_PAIR(CPAIR_LABEL));
-	mvwprintw(screen,21,68,"%5d win%c",wincount, ((wincount%10 != 1) || (wincount == 11)) ? 's' : ' ');
+	mvwprintw(screen,21,68,"%5d win%c",wincount, (wincount != 1) ? 's' : ' ');
 	wattroff(screen,(won_game ? A_BOLD : 0) | COLOR_PAIR(CPAIR_LABEL));
 
 	wrefresh(screen);
@@ -429,11 +438,12 @@ int get_card(int row, int pos, int* o_pos) {
 
 	int curpos = 0;
 	int ccard = rows[row];
-	while ((ccard >= 0) && (cards[ccard].next != C_EMPTY) && (curpos != pos)) {
+	while ((ccard >= 0) && (cards[ccard].next >= 0) && (curpos != pos)) {
 		ccard = cards[ccard].next;
 		curpos++;
 	}
 	if (o_pos) *o_pos = curpos;
+	if (ccard == C_DRAGONSTACK) return C_EMPTY;
 	return ccard;
 }
 
@@ -775,7 +785,7 @@ int main(int argc, char** argv) {
 
 		if ((c == 'n') && (dbgmode == 1)) showcardnum = !showcardnum;
 
-		if ((c == 'Q') || (c == 27)) { if (yes_or_no("Quit?", CPAIR_WARNING)) loop = false; } 
+		if ((c == 'Q') || (c == KEY_F(10) )) { if (yes_or_no("Quit?", CPAIR_WARNING)) loop = false; } 
 		
 		if ( ((rowkeys == qwertykeys) && (c == 'z')) || (c == KEY_F(3)) ) {
 				

@@ -52,9 +52,10 @@ dedicated area automatically as soon as possible.
  * 8,9,0: select foundations
  * [space bar]: remove selection
  * 4,5,6: move dragon cards onto a free cell (when available)
- * Shift+Q or Ctrl+C: quit.
+ * Shift+Q or Ctrl+C or F10: quit.
  * Z (QWERTY mode only) or F3: restart the game
    (all cards will move to the same positions they were in
    at the start of the game)
  * N or F2: start a new game
  * Shift+N or F4: start a specifically-numbered game
+ * A (QWERTY mode only) or F5: toggle automoves on/off
