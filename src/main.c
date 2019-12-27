@@ -239,8 +239,8 @@ bool remove_card(int card) {
 	return true;
 }
 
-bool move_card(int oldrow, int movecard, int newrow) {
-
+bool move_is_legal(int oldrow, int movecard, int newrow) {
+	
 	if (oldrow == C_EMPTY) return false;
 	if (oldrow >= 11) return false; //can't move cards from the flower row or foundations
 	if (movecard < 0) return false;
@@ -255,6 +255,12 @@ bool move_card(int oldrow, int movecard, int newrow) {
        
 	if ( (newrow >= 12) && ( rows[newrow] == C_EMPTY) && (movecard >= 3) ) return false; // can only move aces onto empty foundations
 	if ( (newrow >= 12) && ( rows[newrow] != C_EMPTY) && (rows[newrow] != (movecard - 3)) ) return false; //can only move next card in same rank onto filled foundations, previous cards in foundations will just be discarded.
+	return true;
+}
+
+bool move_card(int oldrow, int movecard, int newrow) {
+
+	if (!move_is_legal(oldrow,movecard,newrow)) return false;
 
 	//at this point, all moves are legal, so let's remove the card from its old location
 
@@ -445,6 +451,37 @@ int get_card(int row, int pos, int* o_pos) {
 	if (o_pos) *o_pos = curpos;
 	if (ccard == C_DRAGONSTACK) return C_EMPTY;
 	return ccard;
+}
+
+bool auto_move_available(void) {
+	
+	for (int i=0; i < 11; i++) {
+
+		int lc = lastcard(i);
+		int fc = -1; //stores the appropriate foundation
+
+		if (lc == FLOWER) {
+			return move_is_legal(i,FLOWER,11);
+		}
+
+		if ( (lc >= 0) && (lc <= 2) && ((fc = find_foundation(-1)) != -1) ) {
+			//empty foundation and an ace
+
+			return move_is_legal(i,lc,fc);
+
+		} else if ( (lc >= 3) && (lc < FIRSTDRAGON) && ((fc = find_foundation(lc-3)) != -1) ) {
+			bool no_lower_cards = true;
+
+			for (int i=0; i < 3; i++)
+				if ((rows[12+i] / 3) < ((lc/3) - 1)) no_lower_cards = false;
+
+			if (no_lower_cards) {
+			//a suitable card for the foundation and no lower cards of other suits
+			return move_is_legal(i,lc,fc);
+			}
+		}
+	}
+	return false;
 }
 
 int auto_move(void) {
@@ -714,11 +751,12 @@ int main(int argc, char** argv) {
 	do {
 		if ((selrow == -1) && (selpos == -1) && (selcard == C_EMPTY)) {
 			
-			while (use_automoves && auto_move()) { 
+			while (use_automoves && auto_move_available()) {
+			usleep(125000);
+			auto_move();
 			automoves++;
 			mvwaddch(screen,1,COLS-2, animdash[automoves % 4]);
 			draw_cards();
-			if (automoves > 1) usleep(250000);
 			};
 		}
 		automoves = 0;
