@@ -11,9 +11,9 @@
 #include <errno.h>
 #include <ctype.h>
 
-#define NUMCARDS 40
+#define NUMCARDS 36
 
-#define GAMENAME "szsol"
+#define GAMENAME "exasol"
 
 char animdash[4] = {'-','/','|','\\'};
 
@@ -31,13 +31,10 @@ enum cpairs {
 	CPAIR_DEFAULT,
 	CPAIR_BORDER,
 	CPAIR_CARD,
+	CPAIR_BLACK,
 	CPAIR_RED,
-	CPAIR_GREEN,
-	CPAIR_BLUE,
-	CPAIR_FLOWER,
+	CPAIR_SEL_BLACK,
 	CPAIR_SEL_RED,
-	CPAIR_SEL_GREEN,
-	CPAIR_SEL_BLUE,
 	CPAIR_LABEL,
 	CPAIR_INFO,
 	CPAIR_WARNING,
@@ -53,68 +50,63 @@ struct themeinfo {
 };
 
 struct themeinfo themes[] = {
-{
-	.colors = {
-	{COLOR_WHITE,COLOR_BLACK}, //default
-	{COLOR_WHITE,COLOR_BLACK}, //border
-	{COLOR_WHITE,COLOR_BLACK}, //default card
-	{COLOR_RED,COLOR_BLACK}, //red card
-	{COLOR_GREEN,COLOR_BLACK}, //green card
-	{COLOR_BLUE,COLOR_BLACK}, //blue card
-	{COLOR_MAGENTA,COLOR_BLACK}, //flower
-	{COLOR_WHITE,COLOR_RED}, //selected red card
-	{COLOR_WHITE,COLOR_GREEN}, //selected green card
-	{COLOR_WHITE,COLOR_BLUE}, //selected blue card
-	{COLOR_MAGENTA,COLOR_BLACK}, //labels
-	{COLOR_WHITE,COLOR_BLUE}, //info statusbar
-	{COLOR_WHITE,COLOR_YELLOW}, //question statusbar
-	{COLOR_WHITE,COLOR_RED}, //error statusbar
+	{
+		.colors = {
+			{COLOR_WHITE,COLOR_BLACK}, //default
+			{COLOR_WHITE,COLOR_BLACK}, //border
+			{COLOR_WHITE,COLOR_BLACK}, //default card
+			{COLOR_WHITE,COLOR_BLACK}, //black card
+			{COLOR_RED,COLOR_BLACK}, //red card
+			{COLOR_BLACK,COLOR_WHITE}, //selected black card
+			{COLOR_WHITE,COLOR_RED}, //selected red card
+			{COLOR_MAGENTA,COLOR_BLACK}, //labels
+			{COLOR_WHITE,COLOR_BLUE}, //info statusbar
+			{COLOR_WHITE,COLOR_YELLOW}, //question statusbar
+			{COLOR_WHITE,COLOR_RED}, //error statusbar
+		},
+		.card_attr = A_BOLD,
+		.cardborder_attr = 0,
+		.selected_attr = A_BOLD,
 	},
-	.card_attr = A_BOLD,
-	.cardborder_attr = 0,
-	.selected_attr = A_BOLD,
-},
-{
-	.colors = {
-	{COLOR_WHITE,COLOR_CYAN}, //default
-	{COLOR_BLACK,COLOR_CYAN}, //border
-	{COLOR_BLACK,COLOR_WHITE}, //default card
-	{COLOR_RED,COLOR_WHITE}, //red card
-	{COLOR_GREEN,COLOR_WHITE}, //green card
-	{COLOR_BLUE,COLOR_WHITE}, //blue card
-	{COLOR_MAGENTA,COLOR_WHITE}, //flower
-	{COLOR_WHITE,COLOR_RED}, //selected red card
-	{COLOR_WHITE,COLOR_GREEN}, //selected green card
-	{COLOR_WHITE,COLOR_BLUE}, //selected blue card
-	{COLOR_BLACK,COLOR_CYAN}, //labels
-	{COLOR_WHITE,COLOR_BLUE}, //info statusbar
-	{COLOR_WHITE,COLOR_YELLOW}, //question statusbar
-	{COLOR_WHITE,COLOR_RED}, //error statusbar
+	{
+		.colors = {
+			{COLOR_WHITE,COLOR_CYAN}, //default
+			{COLOR_BLACK,COLOR_CYAN}, //border
+			{COLOR_BLACK,COLOR_WHITE}, //default card
+			{COLOR_BLACK,COLOR_WHITE}, //black card
+			{COLOR_RED,COLOR_WHITE}, //red card
+			{COLOR_WHITE,COLOR_BLACK}, //selected black card
+			{COLOR_WHITE,COLOR_RED}, //selected red card
+			{COLOR_BLACK,COLOR_CYAN}, //labels
+			{COLOR_WHITE,COLOR_BLUE}, //info statusbar
+			{COLOR_WHITE,COLOR_YELLOW}, //question statusbar
+			{COLOR_WHITE,COLOR_RED}, //error statusbar
+		},
+		.card_attr = 0,
+		.cardborder_attr = A_BOLD,
+		.selected_attr = A_BOLD,
 	},
-	.card_attr = 0,
-	.cardborder_attr = A_BOLD,
-	.selected_attr = A_BOLD,
-},
 };
 
-#define NINES 24
-#define FIRSTDRAGON 27
-#define FLOWER 39
-#define C_EMPTY -1
-#define C_DRAGONSTACK -2
+#define SUIT(card) (card % 4)
+#define COLOR(card) ((card % 4) / 2)
+#define VALUE(card) (card / 4)
 
-#define ROWCOUNT 15
+#define TENS 16
+#define FIRSTFACE 20
+#define C_EMPTY -1
+#define C_FACESTACK -2
+
+#define ROWCOUNT 10
 
 int rows[ROWCOUNT] = {
-	C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY, //tableau
-	C_EMPTY,C_EMPTY,C_EMPTY, //free cells
-	C_EMPTY, //flower area
-	C_EMPTY,C_EMPTY,C_EMPTY}; //foundations
+	C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY,C_EMPTY, //tableau
+	C_EMPTY}; //free cell
 
-#define R_FREECELLS 8
-#define R_GARBAGE 11
+#define R_FREECELL 9
+#define R_GARBAGE 10
 
-#define LONGEST_CHAIN 5
+#define LONGEST_CHAIN 8
 
 int selcard = C_EMPTY;
 
@@ -122,18 +114,18 @@ int selcard = C_EMPTY;
 int dbgmode = 0;
 bool showcardnum = false;
 
-const char* cardvals = "123456789****@";
-const char* cardsuits = "OIX";
+const char* cardvals[] = {" 6"," 7"," 8"," 9","10"," j"," q"," k"," a"};
+const char* cardsuits = "SCDH";
 
 const char* rowkeys =    NULL;
-const char* qwertykeys = "wertyuio1237890";
-const char* qwertzkeys = "wertzuio1237890";
-const char* azertykeys = "zertyuio1237890";
+const char* qwertykeys = "qwertyuiop";
+const char* qwertzkeys = "qwertzuiop";
+const char* azertykeys = "azertyuiop";
 
 unsigned int set_win_count(unsigned int value) {
 	char* homedir = getenv("HOME");
 	if (!homedir) return 0;
-	
+
 	char configname[PATH_MAX];
 	strcpy(configname,homedir);
 	strcat(configname,"/." GAMENAME);
@@ -147,7 +139,7 @@ unsigned int set_win_count(unsigned int value) {
 			if (r == -1) return 0;
 		}
 	} else {
-	
+
 		if (!(S_ISDIR(configdir.st_mode))) return 0;
 	}
 
@@ -168,10 +160,10 @@ unsigned int get_win_count() {
 
 	char configname[PATH_MAX];
 	strcpy(configname,homedir);
-	strcat(configname,"/. " GAMENAME "/wincount");
+	strcat(configname,"/." GAMENAME "/wincount");
 
 	FILE* cffile = fopen(configname,"rb");
-        if (!cffile) return 0;
+	if (!cffile) return 0;
 
 	unsigned int value = 0;
 	int r = fread(&value,4,1,cffile);
@@ -205,17 +197,23 @@ int add_to_row(int pile, int newcard) {
 bool card_can_be_stacked(int top, int bot) {
 
 	if (top == C_EMPTY) return true;
-	if (top == C_DRAGONSTACK) return false;
+	if (top == C_FACESTACK) return false;
 	if (bot == C_EMPTY) return false;
-	if (bot == C_DRAGONSTACK) return false;
-	if (top >= FIRSTDRAGON) return false;
-	if (bot >= FIRSTDRAGON) return false;
-	if ( ((top % 3) != (bot % 3)) && ((top / 3) == (1 + (bot / 3)) ) ) return true;
+	if (bot == C_FACESTACK) return false;
+
+	if (top < FIRSTFACE) {
+		if (bot >= FIRSTFACE) return false;
+		return ( (COLOR(top) != COLOR(bot)) && (VALUE(top) == 1+VALUE(bot)) );
+	}
+	if (top >= FIRSTFACE) {
+		if (bot < FIRSTFACE) return false;
+		return (SUIT(top) == SUIT(bot));
+	}
 	return false;
 }
 
 int find_parent(int card) {
-	for (int i=0; i < R_FREECELLS; i++) {
+	for (int i=0; i < R_FREECELL; i++) {
 		int curcard = rows[i];
 		if (curcard == card) return C_EMPTY;
 		if (curcard == C_EMPTY) continue;  // if the row is empty, skip it
@@ -237,31 +235,37 @@ int stacklen(int card){
 
 bool remove_card(int card) {
 
-	if ((card < 0) || (card > FLOWER)) return false;
+	if ((card < 0)) return false;
 
 	int pcard = find_parent(card);
 	if (pcard != C_EMPTY) cards[pcard].next = C_EMPTY;
-	for (int i=0; i<11; i++)
+	for (int i=0; i< ROWCOUNT; i++)
 		if (rows[i] == card) rows[i] = C_EMPTY;
 	return true;
 }
 
+bool remove_card_stack(int card) {
+
+	if ((card < 0)) return false;
+
+	if (cards[card].next != C_EMPTY) 
+		remove_card_stack(cards[card].next);
+
+	return remove_card(card);
+
+}
+
 bool move_is_legal(int oldrow, int movecard, int newrow) {
-	
+
 	if (oldrow == C_EMPTY) return false;
-	if (oldrow >= 11) return false; //can't move cards from the flower row or foundations
+	if (oldrow >= ROWCOUNT) return false; 
 	if (movecard < 0) return false;
 
-	if ((newrow >= R_FREECELLS) && (newrow < R_FREECELLS) && (rows[newrow] != C_EMPTY)) return false; //can't move cards onto filled free cells, flower rows or foundations
-	if ((newrow >= 8) && (cards[movecard].next != C_EMPTY)) return false; //can't move more than one card onto a free cell, flower row or foundation
+	if ((newrow >= R_FREECELL) && (newrow < ROWCOUNT) && (rows[newrow] != C_EMPTY)) return false; //can't move cards onto filled free cells
+	if ((newrow >= R_FREECELL) && (cards[movecard].next != C_EMPTY)) return false; //can't move more than one card onto a free cell, flower row or foundation
 
-	if ((newrow == 11) && (movecard != FLOWER)) return false; //can only move the flower onto the flower row
-	if ((newrow < 8) && (!card_can_be_stacked(lastcard(newrow),movecard)) ) return false; //can only move stackable cards between tableau rows
-	
-	if ( (newrow >= 12) && ( (movecard >= FIRSTDRAGON)) ) return false; //can't move dragons onto foundations
-       
-	if ( (newrow >= 12) && ( rows[newrow] == C_EMPTY) && (movecard >= 3) ) return false; // can only move aces onto empty foundations
-	if ( (newrow >= 12) && ( rows[newrow] != C_EMPTY) && (rows[newrow] != (movecard - 3)) ) return false; //can only move next card in same rank onto filled foundations, previous cards in foundations will just be discarded.
+	if ((newrow < R_FREECELL) && (!card_can_be_stacked(lastcard(newrow),movecard)) ) return false; //can only move stackable cards between tableau rows
+
 	return true;
 }
 
@@ -278,7 +282,7 @@ bool move_card(int oldrow, int movecard, int newrow) {
 	//and put it into the new one
 
 	int lcard = lastcard(newrow);
-	if ( (newrow >= 12) || (lcard == C_EMPTY) ) {
+	if ( lcard == C_EMPTY ) {
 
 		//empty row or foundation
 		rows[newrow] = movecard; return true;
@@ -295,10 +299,8 @@ int clear_row(int row, int offset, int num) {
 
 	int xpos = 0;
 	int ypos = 0;
-	if (row < 8) { xpos = 6 + row * 9; ypos = 5; }
-	if ((row >= 8) && (row < 11)) { xpos = 2 + (row-8) * 7; ypos = 2; }
-	if (row == 11) { xpos = 38; ypos = 2; }
-	if (row >= 12) { xpos = 58 + (row-12) * 7; ypos = 2; }
+	if (row < R_FREECELL) { xpos = 6 + row * 8; ypos = 5; }
+	if ((row == R_FREECELL)) { xpos = 2 + (row-8) * 7; ypos = 2; }
 	for (int iy=0; iy < num; iy++)
 		mvwhline(screen,ypos+offset+iy,xpos,' ',5);
 	wrefresh(screen);
@@ -308,7 +310,7 @@ int clear_row(int row, int offset, int num) {
 void draw_card(int ccard, int xpos, int ypos) {
 
 	bool selected = ((selcard != C_EMPTY) && (selcard == ccard));
-	int suit_attr = ((selected ? 0 : themes[curtheme].card_attr) | COLOR_PAIR( ((ccard == FLOWER) || (ccard == C_DRAGONSTACK)) ? CPAIR_FLOWER : selected ? CPAIR_SEL_RED + (ccard%3) : CPAIR_RED+(ccard%3) ) );
+	int suit_attr = ((selected ? 0 : themes[curtheme].card_attr) | COLOR_PAIR ( selected ? CPAIR_SEL_BLACK + COLOR(ccard) : CPAIR_BLACK + COLOR(ccard) ) );
 
 	//draw the border
 
@@ -319,7 +321,7 @@ void draw_card(int ccard, int xpos, int ypos) {
 	if (ccard == C_EMPTY) wattroff(screen, COLOR_PAIR(CPAIR_LABEL));
 	else if (selected) wattroff(screen, themes[curtheme].selected_attr | suit_attr);
 	else wattroff(screen,themes[curtheme].cardborder_attr | COLOR_PAIR(CPAIR_CARD));
-	
+
 	//draw the card itself
 
 	if (ccard == C_EMPTY) return;
@@ -329,113 +331,102 @@ void draw_card(int ccard, int xpos, int ypos) {
 		mvwprintw(screen,ypos,xpos+1,"%3d",ccard);
 	} else {
 
-	if (ccard == C_DRAGONSTACK) {
-		mvwprintw(screen,ypos,xpos+1,"-*-");
-	} else if (ccard < 27) {
-		mvwprintw(screen,ypos,xpos+1,"%c%c",cardvals[ccard / 3],cardsuits[ccard % 3]);
-	} else if (ccard < FLOWER) {
-		mvwprintw(screen,ypos,xpos+1,"-%c-",cardsuits[ccard % 3]);
-	} else {
-		mvwprintw(screen,ypos,xpos+1," @ ");
+		if (ccard != C_FACESTACK) {
+			mvwprintw(screen,ypos,xpos+1,"%s%c",cardvals[VALUE(ccard)],cardsuits[SUIT(ccard)]);
+		} else if (ccard == C_FACESTACK) {
+			mvwprintw(screen,ypos,xpos+1,"-*-");
+		}
 	}
-	}
-	
+
 	wattroff(screen, (selected ? themes[curtheme].selected_attr : 0) | suit_attr);
 
 }
 
 int find_freecell() {
-	for (int i=8; i<11; i++) if (rows[i] == C_EMPTY) return i;
+	if (rows[R_FREECELL] == C_EMPTY) return R_FREECELL;
 	return -1;
 }
 
-int find_foundation(int card) {
-	for (int i=12; i < 15; i++) if (rows[i] == card) return i;
-	return -1;
-}
+unsigned int collapse_face_stacks() {
+	unsigned int r=0;
+	for (int row=0; row < R_FREECELL; row++) {
+		if (rows[row] < FIRSTFACE) continue;
 
-int exposed_dragons() {
-	int dragoncount[3];
-	bool dragoncell[3];
+		int facecard = rows[row];
+		int facesuit = SUIT(rows[row]);
+		int facestack = 0;
 
-	memset(dragoncount, 0, sizeof(int)*3);
-	memset(dragoncell, 0, sizeof(bool)*3);
+		while ((facecard >= 0) && (facecard >= FIRSTFACE) && (SUIT(facecard) == facesuit)) {
+			facecard = cards[facecard].next;
+			facestack++;
+		}
 
-	for (int i=0; i < 11; i++) {
-		int lc = lastcard(i);
-		if ((lc >= FIRSTDRAGON) && (lc < FLOWER)) {
-			dragoncount[lc % 3]++;
-			if (i >= 8) dragoncell[lc % 3] = true;
+		if ((facestack == 4) && (facecard == C_EMPTY)) {
+			//collapse the card stack
+			remove_card_stack(rows[row]);
+			clear_row(row, stacklen(rows[row]),4);
+			rows[row] = C_FACESTACK;
+			r++;
 		}
 	}
-
-	int result = 0;
-
-	for (int i=0; i < 3; i++) 
-		if ( ((find_freecell() != -1) || dragoncell[i]) && (dragoncount[i] == 4) ) result |= (1 << i);
-
-	return result;
+	return r;
 }
 
+unsigned int winning_rows() {
+	//find the number of rows that satisfy the victory conditions. if it's 8, then you win!
+	unsigned int r = 0;
+	for (int row=0; row < R_FREECELL; row++) {
+		if (rows[row] == C_FACESTACK) { r++; continue; }
 
-int remove_exposed_dragons(int suit) {
+		if ( (rows[row] >= TENS) && (rows[row] < FIRSTFACE) ) {
+		
+			int rowcard = rows[row];
+			int rowstack = 1;
+		
+			while (cards[rowcard].next >= 0) {
 
-	for (int i=0; i < 11; i++) {
-		int lc = lastcard(i);
-		if ((lc >= FIRSTDRAGON) && (lc < FLOWER) && ((lc%3) == suit) ) {
-			remove_card(lc);
-			clear_row(i,stacklen(rows[i]),1);
+				if (VALUE(cards[rowcard].next) != VALUE(rowcard)-1) break;
+				if (COLOR(cards[rowcard].next) == COLOR(rowcard)) break;
+
+				rowcard = cards[rowcard].next;
+				rowstack++;
+			}
+
+			if (rowstack == 5) {r++; continue;}
 		}
 	}
-	rows[find_freecell()] = -2;
-	return true;
+	return r;
 }
 
 void draw_cards() {
 
-	for (int i=0; i < 3; i++) {
-		draw_card(rows[8+i], 2 + i*7, 2);
-		draw_card(rows[12+i], 58 + i*7, 2);
-		wattron(screen, COLOR_PAIR(CPAIR_LABEL));
-		mvwaddch(screen, 1, 4 + i*7, rowkeys[8+i]);
-		mvwaddch(screen, 1, 40, rowkeys[11]);
-		mvwaddch(screen, 1, 60 + i*7, rowkeys[12+i]);
-		wattroff(screen, COLOR_PAIR(CPAIR_LABEL));
-	}
-	draw_card(rows[11], 38, 2);
+	draw_card(rows[R_FREECELL], 70, 2);
+	wattron(screen, COLOR_PAIR(CPAIR_LABEL));
+	mvwaddch(screen, 1, 72, rowkeys[R_FREECELL]);
+	wattroff(screen, COLOR_PAIR(CPAIR_LABEL));
 
-	int r = exposed_dragons();
-	for (int i=0; i < 3; i++) {
+	for (int i=0; i < R_FREECELL; i++) {
 		wattron(screen, COLOR_PAIR(CPAIR_LABEL));
-		mvwprintw(screen, 1, 23 + (i*4), "%d", 4 + i);
-		wattroff(screen, COLOR_PAIR(CPAIR_LABEL));
-		
-		wattron(screen, ( (r & (1 << i)) ? A_BOLD : 0 ) | COLOR_PAIR(i+CPAIR_RED));
-		mvwprintw(screen, 2, 22 + (i*4), "(%c)", (r & (1 << i)) ? cardsuits[i] : ' ');
-		wattroff(screen, ( (r & (1 << i)) ? A_BOLD : 0 ) | COLOR_PAIR(i+CPAIR_RED));
-	}
-
-	for (int i=0; i < 8; i++) {
-		wattron(screen, COLOR_PAIR(CPAIR_LABEL));
-		mvwaddch(screen, 4, 8 + i*9, rowkeys[i]);
+		mvwaddch(screen, 4, 8 + i*8, rowkeys[i]);
 		wattroff(screen, COLOR_PAIR(CPAIR_LABEL));
 		int ccard = rows[i];
 		int ypos = 0;
 		do {
-			draw_card(ccard, 6 + i*9, 5 + ypos);
+			draw_card(ccard, 6 + i*8, 5 + ypos);
 			ypos++;
 			if (ccard >= 0) ccard = cards[ccard].next;
 		} while (ccard >= 0); 
 	}
 
-	if ((rows[8] == -2) && (rows[9] == -2) && (rows[10] == -2) && (rows[12] >= NINES) && (rows[13] >= NINES) && (rows[14] >= NINES)) {
+	if (collapse_face_stacks()) draw_cards();
+	if (winning_rows() == 8) {
 
-			wattron(screen,A_BOLD | COLOR_PAIR(CPAIR_LABEL));
-			mvwprintw(screen,13,32,"Y O U   W I N !");
-			if (!won_game) { if (seed >= 0) { wincount++; set_win_count(wincount); } won_game = true; }
-			wattron(screen,A_BOLD | COLOR_PAIR(CPAIR_LABEL));
-			}
- 
+		wattron(screen,A_BOLD | COLOR_PAIR(CPAIR_LABEL));
+		mvwprintw(screen,13,32,"Y O U   W I N !");
+		if (!won_game) { if (seed >= 0) { wincount++; set_win_count(wincount); } won_game = true; }
+		wattron(screen,A_BOLD | COLOR_PAIR(CPAIR_LABEL));
+	}
+
 	wattron(screen,(won_game ? A_BOLD : 0) | COLOR_PAIR(CPAIR_LABEL));
 	mvwprintw(screen,21,68,"%5d win%c",wincount, (wincount != 1) ? 's' : ' ');
 	wattroff(screen,(won_game ? A_BOLD : 0) | COLOR_PAIR(CPAIR_LABEL));
@@ -446,8 +437,8 @@ void draw_cards() {
 
 int get_card(int row, int pos, int* o_pos) {
 
-	if (row >= 15) return C_EMPTY;
-	if (row >= 8) return rows[row];
+	if (row >= ROWCOUNT) return C_EMPTY;
+	if (row >= R_FREECELL) return rows[row];
 
 	int curpos = 0;
 	int ccard = rows[row];
@@ -456,76 +447,8 @@ int get_card(int row, int pos, int* o_pos) {
 		curpos++;
 	}
 	if (o_pos) *o_pos = curpos;
-	if (ccard == C_DRAGONSTACK) return C_EMPTY;
+	if (ccard == C_FACESTACK) return C_EMPTY;
 	return ccard;
-}
-
-bool auto_move_available(void) {
-	
-	for (int i=0; i < 11; i++) {
-
-		int lc = lastcard(i);
-		int fc = -1; //stores the appropriate foundation
-
-		if (lc == FLOWER) {
-			return move_is_legal(i,FLOWER,11);
-		}
-
-		if ( (lc >= 0) && (lc <= 2) && ((fc = find_foundation(-1)) != -1) ) {
-			//empty foundation and an ace
-
-			return move_is_legal(i,lc,fc);
-
-		} else if ( (lc >= 3) && (lc < FIRSTDRAGON) && ((fc = find_foundation(lc-3)) != -1) ) {
-			bool no_lower_cards = true;
-
-			for (int i=0; i < 3; i++)
-				if ((rows[12+i] / 3) < ((lc/3) - 1)) no_lower_cards = false;
-
-			if (no_lower_cards) {
-			//a suitable card for the foundation and no lower cards of other suits
-			return move_is_legal(i,lc,fc);
-			}
-		}
-	}
-	return false;
-}
-
-int auto_move(void) {
-
-	for (int i=0; i < 11; i++) {
-
-		int lc = lastcard(i);
-		int fc = -1; //stores the appropriate foundation
-
-		if (lc == FLOWER) {
-			int r = move_card(i,FLOWER,11);
-			if (r) clear_row(i,stacklen(rows[i]),1);
-			return r;
-		}
-
-		if ( (lc >= 0) && (lc <= 2) && ((fc = find_foundation(-1)) != -1) ) {
-			//empty foundation and an ace
-
-			int r = move_card(i,lc,fc);
-			if (r) clear_row(i,stacklen(rows[i]),1);
-			return r;
-
-		} else if ( (lc >= 3) && (lc < FIRSTDRAGON) && ((fc = find_foundation(lc-3)) != -1) ) {
-			bool no_lower_cards = true;
-
-			for (int i=0; i < 3; i++)
-				if ((rows[12+i] / 3) < ((lc/3) - 1)) no_lower_cards = false;
-
-			if (no_lower_cards) {
-			//a suitable card for the foundation and no lower cards of other suits
-			int r = move_card(i,lc,fc);
-			if (r) clear_row(i,stacklen(rows[i]),1);
-			return r;
-			}
-		}
-	}
-	return false;
 }
 
 void update_status (const char* text, int color) {
@@ -557,22 +480,22 @@ bool ask_integer (const char* prompt, int color, int* output) {
 
 	while (true) {
 
-	errno = 0;
-	int str = ask_string(prompt,color,temp,20); 	
-	
-	if (!str) return false;
+		errno = 0;
+		int str = ask_string(prompt,color,temp,20); 	
 
-	char* endptr = temp;
-	int num = strtol(temp,&endptr,0);
-	if (strlen(temp) == 0) return false;
+		if (!str) return false;
 
-	if ( (errno != 0) || ((endptr - temp) < strlen(temp)) ) { beep(); } else { *output = num; return true; }
+		char* endptr = temp;
+		int num = strtol(temp,&endptr,0);
+		if (strlen(temp) == 0) return false;
+
+		if ( (errno != 0) || ((endptr - temp) < strlen(temp)) ) { beep(); } else { *output = num; return true; }
 
 	}
 }
 
 bool yes_or_no (const char* text, int color) {
-	
+
 	wattron(statusbar, A_BOLD | COLOR_PAIR(color));
 	werase(statusbar);
 	wbkgd(statusbar, A_BOLD | COLOR_PAIR(color));
@@ -592,28 +515,28 @@ int new_seed (void) {
 }
 
 int init_board (int seed) {
-	
+
 	int oldstacklens[ROWCOUNT];
 	for (int i=0; i < ROWCOUNT; i++) oldstacklens[i] = stacklen(rows[i]);
-	
+
 	for (int i=0; i<NUMCARDS; i++) cards[i].next = C_EMPTY;
 	for (int i=0; i<ROWCOUNT; i++) rows[i] = C_EMPTY;
 
 	srand(seed);
 	int randcards[NUMCARDS];
 	for (int i=0; i<NUMCARDS; i++) randcards[i] = (NUMCARDS-1)-i;
-	
+
 	if (seed != -1) {
-	for (int i=0; i< (NUMCARDS-1); i++) {
-		int j = i + (rand() % ( (NUMCARDS)-i));
-		int rc = randcards[i];
-		randcards[i] = randcards[j];
-		randcards[j] = rc;
-	}
+		for (int i=0; i<(NUMCARDS-1); i++) {
+			int j = i + (rand() % (NUMCARDS-i));
+			int rc = randcards[i];
+			randcards[i] = randcards[j];
+			randcards[j] = rc;
+		}
 	}
 
-	for (int i=0; i < 40; i++) {
-		add_to_row(i%8, randcards[i]);
+	for (int i=0; i < NUMCARDS; i++) {
+		add_to_row(i % R_FREECELL, randcards[i]);
 	}
 
 	for (int i=0; i < ROWCOUNT; i++) {
@@ -629,15 +552,13 @@ int draw_initial_screen(void) {
 	wattron(screen, COLOR_PAIR(CPAIR_BORDER));
 	box(screen,0,0);
 	wattroff(screen, COLOR_PAIR(CPAIR_BORDER));
-	update_status ("Welcome to szsol!", CPAIR_INFO);
+	update_status ("Welcome to " GAMENAME "!", CPAIR_INFO);
 	wattron(screen,COLOR_PAIR(CPAIR_LABEL));
 	mvwprintw(screen,21,2,"Game #%d",seed);
 	wattroff(screen,COLOR_PAIR(CPAIR_LABEL));
 	wrefresh(screen);
 	return 0;
 }
-
-const static struct timespec r_125ms = {.tv_sec = 0, .tv_nsec = 125000000};
 
 int main(int argc, char** argv) {
 
@@ -669,12 +590,11 @@ int main(int argc, char** argv) {
 				break;
 			case 'v':
 				printf( 
-"szsol v0.1 -- a quick and dirty ncurses clone of @zachtronics'\n"
-"SHENZHEN SOLITAIRE, a solitaire game provided with SHENZHEN I/O\n"
-"(also available as a separate game for Windows, Mac OS, Linux and iOS)\n"
-"\n"
-"Send any bug reports, comments and legal threats regarding this clone to\n"
-"@usr_local_share or at github.com/usrshare/szsol\n");
+						"exasol v0.1 -- a quick and dirty ncurses clone of @zachtronics'\n"
+						"ПАСЬЯНС, a solitaire game provided with EXAPUNKS\n"
+						"\n"
+						"Send any bug reports, comments and legal threats regarding this clone to\n"
+						"@usr_local_share or at github.com/usrshare/szsol\n");
 				return 0;
 			case '?':
 			default: /* '?' */
@@ -687,23 +607,24 @@ int main(int argc, char** argv) {
 "\t-v : Version / credits.\n"
 "\n"
 "How to play:\n"
-"The goal is to clear the tableau by moving all the cards onto\n"
-"the foundations and the free cells.\n\n"
-"Cards valued 1 to 9 stack on the foundations by suit in increasing\n"
-"order (1->2->3). They can also be stacked on the tableau in decreasing\n"
-"order (9->8->7), but only if the suits alternate.\n"
-"Dragons (labeled '*') can't be stacked -- but when all four dragons\n"
-"of a single color are exposed, they can be moved into a single free cell.\n"
-"Otherwise, each free cell can only store one card.\n"
+"The goal is to transform a random arrangement of 36 cards into four stacks\n"
+"of face cards and four stacks of numeric cards.\n"
+"Cards valued 6 to 10 stack on the tableau in decreasing order, if the colors\n"
+"of their suits alternate (red 10 -> black 9 -> red 8 -> ...).\n"
+"Face cards (jacks, queens, kings and aces) stack in any order, if the suit\n"
+"is the same.\n"
+"When four face cards of the same suit are stacked on the same row, they\n"
+"collapse and become unmovable and unstackable.\n"
+"When four collapsed stacks and four full numeric sequences (10->9->8->7->6)\n"
+"are formed on separate rows of the tableau, the game is won.\n"
+"There is also a single free cell, which can store one card at any moment.\n"
 "\n"
 "Controls:\n"
-"1,2,3 -- select free cells\n"
-"W,E,R,T,Y,U,I,O -- select tableau rows\n"
-"Shift-W,E,R,T,Y,U,I,O -- select highest possible card in that tableau row\n"
-"(press multiple times to move more than one card from a row\n"
-"8,9,0 -- select foundations\n"
+"Q,W,E,R,T,Y,U,I,O -- select tableau rows\n"
+"(press multiple times to move more than one card from a row)\n"
+"Shift-Q,W,E,R,T,Y,U,I,O -- select highest possible card in that tableau row\n"
+"P -- select the free cell\n"
 "[space bar] -- remove selection\n"
-"4,5,6 -- move dragons onto a free cell (when available)\n"
 "Shift+Q or Ctrl+C -- exit\n",argv[0]);
 				return 0;
 		}
@@ -722,25 +643,25 @@ int main(int argc, char** argv) {
 	for (int i=0; i < (CPAIR_COUNT-1); i++) {
 		init_pair(i+1,themes[curtheme].colors[i][0],themes[curtheme].colors[i][1]);
 	}
-	
+
 	if (LINES < 24 || COLS < 80) {
 		endwin();
 		fprintf(stderr, 
-			"Terminal window is too small.\n"
-			"Minimum terminal window size: 80x24.\n");
+				"Terminal window is too small.\n"
+				"Minimum terminal window size: 80x24.\n");
 		return -1;
 	}
 
 	screen = newwin(23,80,(LINES-24)/2,(COLS-80) / 2);
 	statusbar = newwin(1,80,(LINES-24)/2 + 23, (COLS-80) / 2);
-	
+
 	keypad(screen,true);
 
 	wincount = get_win_count();
-	
+
 	for (int i=0; i<40; i++) cards[i].next = C_EMPTY;
 	for (int i=0; i<15; i++) rows[i] = C_EMPTY;
-	
+
 	//make sure init_board always sees empty rows on the first run.
 
 	init_board(seed);
@@ -749,26 +670,16 @@ int main(int argc, char** argv) {
 
 	int selrow = -1;
 	int selpos = -1;
-	
+
 	draw_initial_screen();
 	draw_cards();
 
 	bool loop = true;
 
-	int automoves = 0;
-	
 	do {
 		if ((selrow == -1) && (selpos == -1) && (selcard == C_EMPTY)) {
-			
-			while (use_automoves && auto_move_available()) {
-			nanosleep(&r_125ms,NULL);
-			auto_move();
-			automoves++;
-			mvwaddch(screen,1,COLS-2, animdash[automoves % 4]);
-			draw_cards();
-			};
+
 		}
-		automoves = 0;
 		mvwaddch(screen,1,COLS-2,' ');
 		draw_cards();
 		c = wgetch(screen);
@@ -813,18 +724,6 @@ int main(int argc, char** argv) {
 			selcard = newcard;
 		}
 
-		if ((c >= '4') && (c <= '6')) {
-			int r = exposed_dragons();
-			int suit = c - '4';
-			if (r & (1 << suit)) {
-				remove_exposed_dragons(suit);
-				update_status ("Dragons removed.", CPAIR_INFO);
-			} else {
-				update_status ("Can't remove these dragons yet.", CPAIR_ERROR);
-			}
-			selrow = -1; selpos = -1; selcard = C_EMPTY;
-		}
-
 		if (c == ' ') {
 			update_status ("OK.", CPAIR_INFO);
 			selrow = -1; selpos = -1; selcard = -1;
@@ -832,17 +731,17 @@ int main(int argc, char** argv) {
 
 		if ((c == 'n') && (dbgmode == 1)) showcardnum = !showcardnum;
 
-		if ((c == 'Q') || (c == KEY_F(10) )) { if (yes_or_no("Quit?", CPAIR_WARNING)) loop = false; } 
-		
+		if ((c == 'X') || (c == KEY_F(10) )) { if (yes_or_no("Quit?", CPAIR_WARNING)) loop = false; } 
+
 		if ( ((rowkeys == qwertykeys) && (c == 'z')) || (c == KEY_F(3)) ) {
-				
+
 			if (yes_or_no("Restart this game?", CPAIR_WARNING)) { 
 				selrow = -1; selpos = -1; selcard = -1; 
 				init_board(seed); 
 				draw_initial_screen(); 
-			if (won_game) update_status("Winning this exact game once again won't increase your win count.", CPAIR_WARNING); } 
+				if (won_game) update_status("Winning this exact game once again won't increase your win count.", CPAIR_WARNING); } 
 		}
-		
+
 		if ( (c == 'n') || (c == KEY_F(2)) ) {
 			if (yes_or_no("Start a new game?", CPAIR_WARNING)) { 
 				won_game = 0; seed = new_seed(); selrow = -1; selpos = -1; selcard = -1; init_board(seed); 
@@ -852,17 +751,10 @@ int main(int argc, char** argv) {
 
 		if ( (c == 'N') || (c == KEY_F(4)) ) {
 			if (ask_integer("Input game # for a new game or empty string to cancel", CPAIR_WARNING, &seed)) {
-			selrow = -1; selpos = -1; selcard = -1;
-			init_board(seed);
-			draw_initial_screen();
+				selrow = -1; selpos = -1; selcard = -1;
+				init_board(seed);
+				draw_initial_screen();
 			} else update_status("Continuing existing game.", CPAIR_INFO);	
-		}
-
-		if ( ((rowkeys == qwertykeys) && ((c == 'a') || (c == 'A')) ) || (c == KEY_F(5)) ) {
-			use_automoves = !use_automoves;
-			update_status ( use_automoves ?
-				"Automatic moves enabled." :
-				"Automatic moves disabled.", CPAIR_INFO);
 		}
 
 	} while (loop);	
@@ -870,3 +762,4 @@ int main(int argc, char** argv) {
 	endwin();
 	return 0;
 }
+

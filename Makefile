@@ -9,7 +9,8 @@ CFLAGS = -std=c11 -Wall $(shell ncursesw6-config --cflags)
 DEFS += -D_POSIX_C_SOURCE
 LDFLAGS = $(shell ncursesw6-config --libs)
 
-_OBJS = main.o
+_SZ_OBJS = main.o
+_EXA_OBJS = exasol.o
 
 ifdef PROFILE
 CFLAGS += -pg
@@ -23,11 +24,15 @@ DEFS += -g -O0
 endif
 
 CC = $(CCPREFIX)$(_CC)
-OBJS = $(patsubst %,$(OBJDIR)/%,$(_OBJS))
+SZ_OBJS = $(patsubst %,$(OBJDIR)/%,$(_SZ_OBJS))
+EXA_OBJS = $(patsubst %,$(OBJDIR)/%,$(_EXA_OBJS))
 
-install: szsol
+install: szsol exasol
 
-szsol: $(OBJS)
+szsol: $(SZ_OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+exasol: $(EXA_OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(OBJDIR)
