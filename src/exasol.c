@@ -59,7 +59,7 @@ struct themeinfo themes[] = {
 			{COLOR_RED,COLOR_BLACK}, //red card
 			{COLOR_BLACK,COLOR_WHITE}, //selected black card
 			{COLOR_WHITE,COLOR_RED}, //selected red card
-			{COLOR_MAGENTA,COLOR_BLACK}, //labels
+			{COLOR_CYAN,COLOR_BLACK}, //labels
 			{COLOR_WHITE,COLOR_BLUE}, //info statusbar
 			{COLOR_WHITE,COLOR_YELLOW}, //question statusbar
 			{COLOR_WHITE,COLOR_RED}, //error statusbar
@@ -216,7 +216,7 @@ int find_parent(int card) {
 	for (int i=0; i < R_FREECELL; i++) {
 		int curcard = rows[i];
 		if (curcard == card) return C_EMPTY;
-		if (curcard == C_EMPTY) continue;  // if the row is empty, skip it
+		if (curcard < 0) continue;  // if the row is empty or starts with a card that ends a stack, skip it
 		while (cards[curcard].next >= 0) {
 			if(cards[curcard].next == card) return curcard;
 			curcard = cards[curcard].next;
@@ -311,6 +311,7 @@ void draw_card(int ccard, int xpos, int ypos) {
 
 	bool selected = ((selcard != C_EMPTY) && (selcard == ccard));
 	int suit_attr = ((selected ? 0 : themes[curtheme].card_attr) | COLOR_PAIR ( selected ? CPAIR_SEL_BLACK + COLOR(ccard) : CPAIR_BLACK + COLOR(ccard) ) );
+	if (ccard == C_FACESTACK) suit_attr = CPAIR_LABEL;
 
 	//draw the border
 
