@@ -311,7 +311,7 @@ void draw_card(int ccard, int xpos, int ypos) {
 
 	bool selected = ((selcard != C_EMPTY) && (selcard == ccard));
 	int suit_attr = ((selected ? 0 : themes[curtheme].card_attr) | COLOR_PAIR ( selected ? CPAIR_SEL_BLACK + COLOR(ccard) : CPAIR_BLACK + COLOR(ccard) ) );
-	if (ccard == C_FACESTACK) suit_attr = CPAIR_LABEL;
+	if (ccard == C_FACESTACK) suit_attr = COLOR_PAIR(CPAIR_LABEL);
 
 	//draw the border
 

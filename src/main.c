@@ -123,7 +123,8 @@ int dbgmode = 0;
 bool showcardnum = false;
 
 const char* cardvals = "123456789****@";
-const char* cardsuits = "OIX";
+const char* cardsuits = "XIO";
+const char* dragons = "rgw";
 
 const char* rowkeys =    NULL;
 const char* qwertykeys = "wertyuio1237890";
@@ -168,7 +169,7 @@ unsigned int get_win_count() {
 
 	char configname[PATH_MAX];
 	strcpy(configname,homedir);
-	strcat(configname,"/. " GAMENAME "/wincount");
+	strcat(configname,"/." GAMENAME "/wincount");
 
 	FILE* cffile = fopen(configname,"rb");
         if (!cffile) return 0;
@@ -334,7 +335,7 @@ void draw_card(int ccard, int xpos, int ypos) {
 	} else if (ccard < 27) {
 		mvwprintw(screen,ypos,xpos+1,"%c%c",cardvals[ccard / 3],cardsuits[ccard % 3]);
 	} else if (ccard < FLOWER) {
-		mvwprintw(screen,ypos,xpos+1,"-%c-",cardsuits[ccard % 3]);
+		mvwprintw(screen,ypos,xpos+1,"-%c-",dragons[ccard % 3]);
 	} else {
 		mvwprintw(screen,ypos,xpos+1," @ ");
 	}
@@ -411,7 +412,7 @@ void draw_cards() {
 		wattroff(screen, COLOR_PAIR(CPAIR_LABEL));
 		
 		wattron(screen, ( (r & (1 << i)) ? A_BOLD : 0 ) | COLOR_PAIR(i+CPAIR_RED));
-		mvwprintw(screen, 2, 22 + (i*4), "(%c)", (r & (1 << i)) ? cardsuits[i] : ' ');
+		mvwprintw(screen, 2, 22 + (i*4), "(%c)", (r & (1 << i)) ? dragons[i] : ' ');
 		wattroff(screen, ( (r & (1 << i)) ? A_BOLD : 0 ) | COLOR_PAIR(i+CPAIR_RED));
 	}
 
@@ -704,7 +705,7 @@ int main(int argc, char** argv) {
 "8,9,0 -- select foundations\n"
 "[space bar] -- remove selection\n"
 "4,5,6 -- move dragons onto a free cell (when available)\n"
-"Shift+Q or Ctrl+C -- exit\n",argv[0]);
+"Shift+X or Ctrl+C -- exit\n",argv[0]);
 				return 0;
 		}
 	}
@@ -832,7 +833,7 @@ int main(int argc, char** argv) {
 
 		if ((c == 'n') && (dbgmode == 1)) showcardnum = !showcardnum;
 
-		if ((c == 'Q') || (c == KEY_F(10) )) { if (yes_or_no("Quit?", CPAIR_WARNING)) loop = false; } 
+		if ((c == 'X') || (c == KEY_F(10) )) { if (yes_or_no("Quit?", CPAIR_WARNING)) loop = false; } 
 		
 		if ( ((rowkeys == qwertykeys) && (c == 'z')) || (c == KEY_F(3)) ) {
 				
