@@ -660,8 +660,8 @@ int main(int argc, char** argv) {
 
 	wincount = get_win_count();
 
-	for (int i=0; i<40; i++) cards[i].next = C_EMPTY;
-	for (int i=0; i<15; i++) rows[i] = C_EMPTY;
+	for (int i=0; i<NUMCARDS; i++) cards[i].next = C_EMPTY;
+	for (int i=0; i<ROWCOUNT; i++) rows[i] = C_EMPTY;
 
 	//make sure init_board always sees empty rows on the first run.
 
