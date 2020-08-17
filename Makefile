@@ -18,7 +18,7 @@ LDFLAGS += -pg
 endif
 
 ifdef RELEASE
-DEFS += -xSSE3 -O3 -DNDEBUG
+DEFS += -msse3 -O3 -DNDEBUG
 else
 DEFS += -g -O0
 endif
@@ -35,8 +35,9 @@ szsol: $(SZ_OBJS)
 exasol: $(EXA_OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.c $(OBJDIR)
-	$(CC) -c -o $@ $< $(CFLAGS) $(DEFS)
+$(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
+	@mkdir -p $(OBJDIR)
+	$(CC) -c -o $@ $(CFLAGS) $(DEFS) $^
 
 $(OBJDIR):
 	mkdir $(OBJDIR)

@@ -65,7 +65,7 @@ struct themeinfo themes[] = {
 	{COLOR_WHITE,COLOR_RED}, //selected red card
 	{COLOR_WHITE,COLOR_GREEN}, //selected green card
 	{COLOR_WHITE,COLOR_BLUE}, //selected blue card
-	{COLOR_MAGENTA,COLOR_BLACK}, //labels
+	{COLOR_WHITE,COLOR_BLACK}, //labels
 	{COLOR_WHITE,COLOR_BLUE}, //info statusbar
 	{COLOR_WHITE,COLOR_YELLOW}, //question statusbar
 	{COLOR_WHITE,COLOR_RED}, //error statusbar
