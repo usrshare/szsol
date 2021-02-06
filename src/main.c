@@ -253,7 +253,7 @@ bool move_is_legal(int oldrow, int movecard, int newrow) {
 	if (oldrow >= 11) return false; //can't move cards from the flower row or foundations
 	if (movecard < 0) return false;
 
-	if ((newrow >= R_FREECELLS) && (newrow < R_FREECELLS) && (rows[newrow] != C_EMPTY)) return false; //can't move cards onto filled free cells, flower rows or foundations
+	if ((newrow >= R_FREECELLS) && (newrow < R_GARBAGE) && (rows[newrow] != C_EMPTY)) return false; //can't move cards onto filled free cells, flower rows or foundations
 	if ((newrow >= 8) && (cards[movecard].next != C_EMPTY)) return false; //can't move more than one card onto a free cell, flower row or foundation
 
 	if ((newrow == 11) && (movecard != FLOWER)) return false; //can only move the flower onto the flower row
