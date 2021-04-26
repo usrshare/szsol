@@ -11,6 +11,7 @@ LDFLAGS = $(shell ncursesw6-config --libs)
 
 _SZ_OBJS = main.o
 _EXA_OBJS = exasol.o
+_KABU_OBJS = kabusol.o
 
 ifdef PROFILE
 CFLAGS += -pg
@@ -26,13 +27,17 @@ endif
 CC = $(CCPREFIX)$(_CC)
 SZ_OBJS = $(patsubst %,$(OBJDIR)/%,$(_SZ_OBJS))
 EXA_OBJS = $(patsubst %,$(OBJDIR)/%,$(_EXA_OBJS))
+KABU_OBJS = $(patsubst %,$(OBJDIR)/%,$(_KABU_OBJS))
 
-install: szsol exasol
+install: szsol exasol kabusol
 
 szsol: $(SZ_OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 exasol: $(EXA_OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+kabusol: $(KABU_OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
