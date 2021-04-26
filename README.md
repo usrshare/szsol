@@ -12,6 +12,7 @@ The SHENZHEN I/O solitaire game is also available as a standalone product on [St
 
 ![Screenshot of szsol](https://i.imgur.com/AJv0zcs.png)
 ![Screenshot of exasol](https://i.imgur.com/rvUyv7z.png)
+![Screenshot of kabusol](https://i.imgur.com/zfKt0jM.png)
 
 # Compiling
 
