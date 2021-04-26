@@ -619,24 +619,26 @@ int main(int argc, char** argv) {
 "\t-v : Version / credits.\n"
 "\n"
 "How to play:\n"
-"The goal is to transform a random arrangement of 36 cards into four stacks\n"
-"of face cards and four stacks of numeric cards.\n"
-"Cards valued 6 to 10 stack on the tableau in decreasing order, if the colors\n"
-"of their suits alternate (red 10 -> black 9 -> red 8 -> ...).\n"
-"Face cards (jacks, queens, kings and aces) stack in any order, if the suit\n"
-"is the same.\n"
-"When four face cards of the same suit are stacked on the same row, they\n"
+"The goal is to transform a random arrangement of 40 cards into ten stacks\n"
+"consisting of 4 cards of the same value each.\n"
+"Cards can be stacked if their values match.\n"
+"When four cards of the same value are stacked on the same row, they\n"
 "collapse and become unmovable and unstackable.\n"
-"When four collapsed stacks and four full numeric sequences (10->9->8->7->6)\n"
-"are formed on separate rows of the tableau, the game is won.\n"
-"There is also a single free cell, which can store one card at any moment.\n"
+"When ten collapsed stacks are formed on the tableau and free cells,\n"
+"the game is won.\n"
+"There are also free cells, which can store one card at any moment.\n"
+"In addition, multiple cards can be dropped onto a free cell, but only\n"
+"if they will form a stack (4 identical cards on an empty cell or 3\n"
+"identical cards on a cell containing the fourth one). If there are\n"
+"locked free cells, completing a stack will unlock one.\n"
 "\n"
 "Controls:\n"
-"Q,W,E,R,T,Y,U,I,O -- select tableau rows\n"
+"W,E,R,T,Y,U,I,O -- select tableau rows\n"
 "(press multiple times to move more than one card from a row)\n"
-"Shift-Q,W,E,R,T,Y,U,I,O -- select highest possible card in that tableau row\n"
-"P -- select the free cell\n"
+"Shift-W,E,R,T,Y,U,I,O -- select highest possible card in that tableau row\n"
+"2,3,4,5 -- select one of the free cells\n"
 "[space bar] -- remove selection\n"
+"D -- change difficulty (applies on next game)\n"
 "Shift+Q or Ctrl+C -- exit\n",argv[0]);
 				return 0;
 		}
@@ -718,6 +720,9 @@ int main(int argc, char** argv) {
 					selcard = C_EMPTY;
 				} else if (newcard == C_EMPTY) {
 					update_status("Can't select an empty row.", CPAIR_ERROR);
+					beep();
+				} else if (newcard == C_STACK) {
+					update_status("Can't select a full stack.", CPAIR_ERROR);
 					beep();
 				} else if (newcard == C_LOCKED) {
 					update_status("Can't select a locked free cell.", CPAIR_ERROR);

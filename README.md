@@ -1,10 +1,11 @@
-# szsol and exasol - quick, dirty and very unauthorized ncurses clones of Shenzhen Solitaire and ПАСЬЯНС
+# szsol, exasol and kabusol - quick, dirty and very unauthorized ncurses clones of Shenzhen Solitaire, ПАСЬЯНС and Kabufuda Solitaire
 
-This package contains two ncurses-based versions of solitaire games originally 
+This package contains three ncurses-based versions of solitaire games originally 
 developed by [Zachtronics](https://twitter.com/zachtronics) and distributed
 as part of 
-[SHENZHEN I/O](http://www.zachtronics.com/shenzhen-io/) and
-[EXAPUNKS](http://www.zachtronics.com/exapunks/).
+[SHENZHEN I/O](http://www.zachtronics.com/shenzhen-io/),
+[EXAPUNKS](http://www.zachtronics.com/exapunks/) and
+[Eliza](https://www.zachtronics.com/eliza/).
 
 The SHENZHEN I/O solitaire game is also available as a standalone product on [Steam](http://store.steampowered.com/app/570490/SHENZHEN_SOLITAIRE/) and the
 [App Store](https://itunes.apple.com/tw/app/shenzhen-solitaire/id1206037778).
@@ -93,5 +94,33 @@ In addition, when four face cards of one suit are stacked on an empty row, they 
  * Z (QWERTY mode only) or F3: restart the game
    (all cards will move to the same positions they were in
    at the start of the game)
+ * N or F2: start a new game
+ * Shift+N or F4: start a specifically-numbered game
+
+## How to play kabusol
+
+Kabufuda solitaire is played with a 40-card kabufuda deck. The deck features cards valued between 1 and 10, four of each value.
+
+In kabusol, all of the cards are represented with their numeric value. A "one" card is colored red, to represent the color of its card.
+
+The goal is to arrange the 40 cards, which are initially spread randomly and evenly across 8 rows of the tableau, into 10 separate stacks. Cards form a stack whenever four cards of the same value (and no other cards) occupy a tableau row or a free cell.
+
+Cards can be stacked if they have the same value. A free cell can only contain one card, but it's also possible to drop 4 equal-value cards onto an empty free cell (forming a stack) or to drop 3 equal-value cards onto a free cell containing the 4th card of the same value (also forming a stack).
+
+When a stack is formed, it becomes immovable: no cards can be placed on it, and it can't be moved anywhere. In addition, if there are locked free cells (which occur when the game is started at a difficulty level other than "Easy"), one locked free cell is unlocked whenever a stack is formed.
+
+**WARNING**: the game only counts victories when it's played on the "Expert" difficulty.
+
+### Controls
+ * W,E,R,T,Y,U,I,O: select tableau rows
+   (press multiple times to move more than one card from a row)
+   (hold shift to select as many cards as possible from a row)
+ * 2,3,4,5: select one of the free cells
+ * [space bar]: remove selection
+ * Shift+X or F10: quit.
+ * Z (QWERTY mode only) or F3: restart the game
+   (all cards will move to the same positions they were in
+   at the start of the game)
+ * D: change the difficulty at which the next game will be played.
  * N or F2: start a new game
  * Shift+N or F4: start a specifically-numbered game
