@@ -582,11 +582,13 @@ int main(int argc, char** argv) {
 
 	while ((opt = getopt(argc, argv, "d:xvn:t:DF")) != -1) {
 		switch (opt) {
-			case 'd':
+			case 'd': {
 				int dl = atoi(optarg);
 				if ((dl >= 0) && (dl < D_COUNT)) {
 				  cur_diff = next_diff = dl;
-				}
+				} 
+				break;
+			}
 			case 'x':
 				dbgmode = 1;
 				printf("Press ENTER to start (feel free to attach a debugger to this process at this moment).\n");
