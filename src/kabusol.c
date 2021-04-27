@@ -580,9 +580,14 @@ int main(int argc, char** argv) {
 
 	//int dbgmode = 0;
 
-	while ((opt = getopt(argc, argv, "dvn:t:DF")) != -1) {
+	while ((opt = getopt(argc, argv, "d:xvn:t:DF")) != -1) {
 		switch (opt) {
 			case 'd':
+				int dl = atoi(optarg);
+				if ((dl >= 0) && (dl < D_COUNT)) {
+				  cur_diff = next_diff = dl;
+				}
+			case 'x':
 				dbgmode = 1;
 				printf("Press ENTER to start (feel free to attach a debugger to this process at this moment).\n");
 				getc(stdin);
@@ -611,8 +616,9 @@ int main(int argc, char** argv) {
 			case '?':
 			default: /* '?' */
 				fprintf(stderr, 
-"Usage: %s [-d] [-D | -F] [-n number] [-v]\n"
-"\t-d : Debug mode.\n"
+"Usage: %s [-d level] [-x] [-D | -F] [-n number] [-v]\n"
+"\t-d [level] : Set the difficulty level (from 0 to 3).\n"
+"\t-x : Debug mode.\n"
 "\t-D : Use the QWERTZ keyboard layout.\n"
 "\t-F : Use the AZERTY keyboard layout.\n"
 "\t-n [number] : Start with a predetermined card layout based on a seed number. \n"
