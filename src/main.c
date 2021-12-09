@@ -55,20 +55,20 @@ struct themeinfo {
 struct themeinfo themes[] = {
 {
 	.colors = {
-	{COLOR_WHITE,COLOR_BLACK}, //default
+	{8+COLOR_WHITE,COLOR_BLACK}, //default
 	{COLOR_WHITE,COLOR_BLACK}, //border
 	{COLOR_WHITE,COLOR_BLACK}, //default card
-	{COLOR_RED,COLOR_BLACK}, //red card
-	{COLOR_GREEN,COLOR_BLACK}, //green card
-	{COLOR_BLUE,COLOR_BLACK}, //blue card
-	{COLOR_MAGENTA,COLOR_BLACK}, //flower
+	{8+COLOR_RED,COLOR_BLACK}, //red card
+	{8+COLOR_GREEN,COLOR_BLACK}, //green card
+	{8+COLOR_BLUE,COLOR_BLACK}, //blue card
+	{8+COLOR_MAGENTA,COLOR_BLACK}, //flower
 	{COLOR_WHITE,COLOR_RED}, //selected red card
 	{COLOR_WHITE,COLOR_GREEN}, //selected green card
 	{COLOR_WHITE,COLOR_BLUE}, //selected blue card
 	{COLOR_WHITE,COLOR_BLACK}, //labels
-	{COLOR_WHITE,COLOR_BLUE}, //info statusbar
-	{COLOR_WHITE,COLOR_YELLOW}, //question statusbar
-	{COLOR_WHITE,COLOR_RED}, //error statusbar
+	{8+COLOR_WHITE,COLOR_BLUE}, //info statusbar
+	{8+COLOR_WHITE,COLOR_YELLOW}, //question statusbar
+	{8+COLOR_WHITE,COLOR_RED}, //error statusbar
 	},
 	.card_attr = A_BOLD,
 	.cardborder_attr = 0,
@@ -78,18 +78,18 @@ struct themeinfo themes[] = {
 	.colors = {
 	{COLOR_WHITE,COLOR_CYAN}, //default
 	{COLOR_BLACK,COLOR_CYAN}, //border
-	{COLOR_BLACK,COLOR_WHITE}, //default card
-	{COLOR_RED,COLOR_WHITE}, //red card
-	{COLOR_GREEN,COLOR_WHITE}, //green card
-	{COLOR_BLUE,COLOR_WHITE}, //blue card
-	{COLOR_MAGENTA,COLOR_WHITE}, //flower
+	{COLOR_BLACK,8+COLOR_WHITE}, //default card
+	{COLOR_RED,8+COLOR_WHITE}, //red card
+	{COLOR_GREEN,8+COLOR_WHITE}, //green card
+	{COLOR_BLUE,8+COLOR_WHITE}, //blue card
+	{COLOR_MAGENTA,8+COLOR_WHITE}, //flower
 	{COLOR_WHITE,COLOR_RED}, //selected red card
 	{COLOR_WHITE,COLOR_GREEN}, //selected green card
 	{COLOR_WHITE,COLOR_BLUE}, //selected blue card
 	{COLOR_BLACK,COLOR_CYAN}, //labels
-	{COLOR_WHITE,COLOR_BLUE}, //info statusbar
-	{COLOR_WHITE,COLOR_YELLOW}, //question statusbar
-	{COLOR_WHITE,COLOR_RED}, //error statusbar
+	{8+COLOR_WHITE,COLOR_BLUE}, //info statusbar
+	{8+COLOR_WHITE,COLOR_YELLOW}, //question statusbar
+	{8+COLOR_WHITE,COLOR_RED}, //error statusbar
 	},
 	.card_attr = 0,
 	.cardborder_attr = A_BOLD,
