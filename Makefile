@@ -9,9 +9,9 @@ CFLAGS = -std=c11 -Wall $(shell ncursesw6-config --cflags)
 DEFS += -D_POSIX_C_SOURCE
 LDFLAGS = $(shell ncursesw6-config --libs)
 
-_SZ_OBJS = main.o
-_EXA_OBJS = exasol.o
-_KABU_OBJS = kabusol.o
+_SZ_OBJS = main.o common.o
+_EXA_OBJS = exasol.o common.o
+_KABU_OBJS = kabusol.o common.o
 
 ifdef PROFILE
 CFLAGS += -pg

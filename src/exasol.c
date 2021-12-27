@@ -4,12 +4,10 @@
 #include <curses.h>
 #include <time.h>
 #include <stdbool.h>
-#include <unistd.h>
-#include <limits.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <errno.h>
+#include <unistd.h>
 #include <ctype.h>
+#include "common.h"
 
 #define NUMCARDS 36
 
@@ -121,55 +119,6 @@ const char* rowkeys =    NULL;
 const char* qwertykeys = "qwertyuiop";
 const char* qwertzkeys = "qwertzuiop";
 const char* azertykeys = "azertyuiop";
-
-unsigned int set_win_count(unsigned int value) {
-	char* homedir = getenv("HOME");
-	if (!homedir) return 0;
-
-	char configname[PATH_MAX];
-	strcpy(configname,homedir);
-	strcat(configname,"/." GAMENAME);
-
-	struct stat configdir;
-	int r = stat(configname,&configdir);
-	if (r == -1) {
-
-		if (errno == ENOENT) {
-			r = mkdir(configname, 0755);
-			if (r == -1) return 0;
-		}
-	} else {
-
-		if (!(S_ISDIR(configdir.st_mode))) return 0;
-	}
-
-	strcat(configname,"/wincount");
-
-	FILE* cffile = fopen(configname,"wb");
-	if (!cffile) return 0;
-
-	r = fwrite(&value,4,1,cffile);
-	fclose(cffile);
-	if (r == 0) return 0; else return wincount;
-
-}
-unsigned int get_win_count() {
-
-	char* homedir = getenv("HOME");
-	if (!homedir) return 0;
-
-	char configname[PATH_MAX];
-	strcpy(configname,homedir);
-	strcat(configname,"/." GAMENAME "/wincount");
-
-	FILE* cffile = fopen(configname,"rb");
-	if (!cffile) return 0;
-
-	unsigned int value = 0;
-	int r = fread(&value,4,1,cffile);
-	fclose(cffile);
-	if (r == 0) return 0; else return value;
-}
 
 WINDOW* screen = NULL;
 WINDOW* statusbar = NULL;
@@ -424,7 +373,7 @@ void draw_cards() {
 
 		wattron(screen,A_BOLD | COLOR_PAIR(CPAIR_LABEL));
 		mvwprintw(screen,13,32,"Y O U   W I N !");
-		if (!won_game) { if (seed >= 0) { wincount++; set_win_count(wincount); } won_game = true; }
+		if (!won_game) { if (seed >= 0) { wincount++; set_win_count(wincount,GAMENAME); } won_game = true; }
 		wattron(screen,A_BOLD | COLOR_PAIR(CPAIR_LABEL));
 	}
 
@@ -658,7 +607,7 @@ int main(int argc, char** argv) {
 
 	keypad(screen,true);
 
-	wincount = get_win_count();
+	wincount = get_win_count(GAMENAME);
 
 	for (int i=0; i<NUMCARDS; i++) cards[i].next = C_EMPTY;
 	for (int i=0; i<ROWCOUNT; i++) rows[i] = C_EMPTY;
